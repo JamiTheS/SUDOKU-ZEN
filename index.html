@@ -11,6 +11,27 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="battle-styles.css">
 
+    <!-- Riddle Toast -->
+    <div id="riddle-toast" class="hidden">
+        <div class="riddle-content">
+            <span class="riddle-icon">🔮</span>
+            <p id="riddle-text"></p>
+        </div>
+    </div>
+
+    <!-- Co-op HUD -->
+    <div id="coop-hud" class="hidden">
+        <div class="coop-stats">
+            <div class="lives-container">
+                <span>Vies:</span>
+                <span id="coop-lives">❤️❤️❤️</span>
+            </div>
+            <div class="partner-container">
+                <span id="coop-partner">En attente...</span>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
@@ -32,6 +53,9 @@
         window.firebaseDB = getDatabase(app);
         window.firebaseRefs = { ref, set, onValue, update, remove, push, onDisconnect };
     </script>
+    <script src="battle-manager.js"></script>
+    <script src="coop-manager.js"></script>
+    <script src="script.js"></script>
 </head>
 
 <body>
@@ -64,7 +88,10 @@
             </header>
 
             <div class="status-bar">
-                <div class="timer">00:00</div>
+                <div class="timer-container">
+                    <div class="timer">00:00</div>
+                    <button id="pause-btn" class="icon-btn" title="Pause (P)">⏸️</button>
+                </div>
                 <div class="difficulty-display">Niveau: <span id="current-difficulty">Moyen</span></div>
             </div>
 
@@ -83,7 +110,10 @@
                         <button class="num-btn" data-num="7">7</button>
                         <button class="num-btn" data-num="8">8</button>
                         <button class="num-btn" data-num="9">9</button>
+                        <button class="num-btn" data-num="9">9</button>
                         <button class="action-btn" id="notes-toggle" title="Mode Notes (N)">✏️</button>
+                        <button class="action-btn" id="hint-btn" title="Indice (H)">💡 <span
+                                id="hint-count">3</span></button>
                         <button class="action-btn" id="erase-btn" title="Effacer (Del)">⌫</button>
                     </div>
 
@@ -99,10 +129,11 @@
             </div>
 
             <div class="bottom-controls">
-                <button id="media-toggle-btn" class="media-btn">📺 Mode Multitâche</button>
-                <button id="stats-btn" class="stats-btn">📊 Statistiques</button>
-                <button id="saves-btn" class="stats-btn">💾 Sauvegardes</button>
-                <button id="battle-btn" class="battle-btn">⚔️ Mode Battle</button>
+                <button id="multitask-btn" class="action-btn">📑 Mode Multitâche</button>
+                <button id="stats-btn" class="action-btn">📊 Statistiques</button>
+                <button id="saves-btn" class="action-btn">💾 Sauvegardes</button>
+                <button id="battle-btn" class="action-btn battle-btn">⚔️ Mode Battle</button>
+                <button id="coop-btn" class="action-btn coop-btn">🧬 Mode Fusion</button>
             </div>
         </main>
 
@@ -268,6 +299,17 @@
                 <button class="diff-btn" data-battle-diff="medium">Moyen</button>
                 <button class="diff-btn" data-battle-diff="hard">Difficile</button>
                 <button class="diff-btn" data-battle-diff="expert">Expert</button>
+            </div>
+            <div class="game-mode-selection">
+                <label class="mode-label">Mode de jeu :</label>
+                <div class="mode-options">
+                    <button class="mode-option-btn active" data-mode="lives" type="button">
+                        ❤️ Vies partagées (3)
+                    </button>
+                    <button class="mode-option-btn" data-mode="timer" type="button">
+                        ⏱️ Timer uniquement
+                    </button>
+                </div>
             </div>
             <div class="modal-buttons">
                 <button id="cancel-create-room-btn" class="secondary-btn">Annuler</button>

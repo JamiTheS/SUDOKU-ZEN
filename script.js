@@ -15,9 +15,12 @@ class SudokuGame {
         this.timer = 0;
         this.timerInterval = null;
         this.difficulty = 'medium';
-        this.isPlaying = false;
+        this.battleMode = false;
+        this.coopMode = false;
         this.solution = null;
         this.initial = null;
+        this.isPaused = false;
+        this.hintsRemaining = 3;
 
         // New Features
         this.isNoteMode = false;
@@ -30,20 +33,20 @@ class SudokuGame {
             this.soundManager = { playTap: () => { }, playNote: () => { }, playErase: () => { }, playWin: () => { } }; // Dummy fallback
         }
 
+        this.soundManager = new SoundManager();
         this.themeManager = new ThemeManager();
         this.profileManager = new ProfileManager();
         this.statsManager = new StatsManager(this.profileManager);
-
-        // Battle mode
-        this.battleMode = false;
-        this.battleManager = null;
+        this.battleManager = new BattleManager(this);
+        this.coopManager = new CoopManager(this);
 
         // Wait for Firebase to be ready before initializing BattleManager
-        setTimeout(() => {
-            if (window.firebaseDB) {
-                this.battleManager = new BattleManager(this);
-            }
-        }, 500);
+        // This block is now removed as managers are initialized directly.
+        // setTimeout(() => {
+        //     if (window.firebaseDB) {
+        //         this.battleManager = new BattleManager(this);
+        //     }
+        // }, 500);
 
         this.dom = {
             board: document.getElementById('board'),
@@ -100,7 +103,14 @@ class SudokuGame {
             waitingRoomModal: document.getElementById('waiting-room-modal'),
             waitingRoomCode: document.getElementById('waiting-room-code'),
             copyCodeBtn: document.getElementById('copy-code-btn'),
-            cancelWaitingBtn: document.getElementById('cancel-waiting-btn')
+            cancelWaitingBtn: document.getElementById('cancel-waiting-btn'),
+            pauseBtn: document.getElementById('pause-btn'),
+            hintBtn: document.getElementById('hint-btn'),
+            hintCount: document.getElementById('hint-count'),
+            riddleToast: document.getElementById('riddle-toast'),
+            riddleText: document.getElementById('riddle-text'),
+            coopBtn: document.getElementById('coop-btn'),
+            coopHud: document.getElementById('coop-hud')
         };
 
         // Validate critical DOM elements
@@ -125,6 +135,18 @@ class SudokuGame {
     setupEventListeners() {
         if (this.dom.newGameBtn) this.dom.newGameBtn.addEventListener('click', () => this.startNewGame());
 
+        if (this.dom.pauseBtn) {
+            this.dom.pauseBtn.addEventListener('click', () => this.togglePause());
+        }
+
+        if (this.dom.hintBtn) {
+            this.dom.hintBtn.addEventListener('click', () => this.getHint());
+        }
+
+        if (this.dom.coopBtn) {
+            this.dom.coopBtn.addEventListener('click', () => this.startCoopMode());
+        }
+
         this.dom.diffBtns.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 this.dom.diffBtns.forEach(b => b.classList.remove('active'));
@@ -136,6 +158,7 @@ class SudokuGame {
         // Board interaction
         if (this.dom.board) {
             this.dom.board.addEventListener('click', (e) => {
+                if (this.isPaused) this.resumeTimer();
                 const cell = e.target.closest('.cell');
                 if (cell) this.selectCell(cell);
             });
@@ -163,8 +186,10 @@ class SudokuGame {
             if (!this.isPlaying) return;
 
             if (e.key >= '1' && e.key <= '9') {
+                if (this.isPaused) this.resumeTimer();
                 this.handleInput(parseInt(e.key));
             } else if (e.key === 'Backspace' || e.key === 'Delete') {
+                if (this.isPaused) this.resumeTimer();
                 this.handleInput(0);
             } else if (e.key.toLowerCase() === 'n') {
                 this.isNoteMode = !this.isNoteMode;
@@ -172,6 +197,7 @@ class SudokuGame {
                     this.dom.notesToggle.classList.toggle('active');
                 }
             } else {
+                if (this.isPaused) this.resumeTimer();
                 this.handleArrowNavigation(e.key);
             }
         });
@@ -277,6 +303,7 @@ class SudokuGame {
         // Battle mode event listeners
         if (this.dom.battleBtn) {
             this.dom.battleBtn.addEventListener('click', () => {
+                this.currentMode = 'battle';
                 if (this.dom.battleChoiceModal) {
                     this.dom.battleChoiceModal.classList.remove('hidden');
                 }
@@ -320,6 +347,15 @@ class SudokuGame {
                 });
             });
         }
+
+        // Game mode selection for Co-op
+        const modeButtons = document.querySelectorAll('.mode-option-btn');
+        modeButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                modeButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
 
         if (this.dom.confirmCreateRoomBtn) {
             this.dom.confirmCreateRoomBtn.addEventListener('click', () => this.createBattleRoom());
@@ -383,10 +419,19 @@ class SudokuGame {
     }
 
     handleInput(num) {
-        if (!this.selectedCell || !this.isPlaying) return;
-        if (this.selectedCell.classList.contains('initial')) return;
+        if (!this.isPlaying || this.isPaused) return;
+        if (!this.selectedCell) return;
 
         const index = parseInt(this.selectedCell.dataset.index);
+
+        // Co-op Mode Delegation
+        if (this.coopMode) {
+            if (this.initialBoard[index] !== 0) return;
+            this.coopManager.makeMove(index, num);
+            return;
+        }
+
+        if (this.initialBoard[index] !== 0) return;
 
         if (this.isNoteMode && num !== 0) {
             // Handle Notes
@@ -438,6 +483,13 @@ class SudokuGame {
         cell.className = 'cell';
         cell.dataset.index = index;
 
+        // Co-op Mode Styling
+        if (this.coopMode) {
+            const owner = this.coopManager.cellOwners ? this.coopManager.cellOwners[index] : null;
+            if (owner === 'p1') cell.classList.add('cell-p1');
+            if (owner === 'p2') cell.classList.add('cell-p2');
+        }
+
         if (this.initialBoard[index] !== 0) {
             cell.classList.add('initial');
             cell.textContent = this.initialBoard[index];
@@ -469,7 +521,8 @@ class SudokuGame {
                 solution: this.solution,
                 notes: this.notes.map(set => Array.from(set)),
                 seconds: this.timer,
-                difficulty: this.difficulty
+                difficulty: this.difficulty,
+                hintsRemaining: this.hintsRemaining
             };
             localStorage.setItem('sudoku-save', JSON.stringify(gameState));
         } catch (e) {
@@ -494,6 +547,8 @@ class SudokuGame {
                 this.notes = state.notes.map(arr => new Set(arr));
                 this.timer = state.seconds || 0;
                 this.difficulty = state.difficulty || 'medium';
+                this.hintsRemaining = state.hintsRemaining !== undefined ? state.hintsRemaining : 3;
+                this.updateHintUI();
 
                 this.renderBoard();
                 this.isPlaying = true;
@@ -665,6 +720,8 @@ class SudokuGame {
         this.generateBoard();
         this.prepareBoardForDifficulty();
         this.notes = new Array(81).fill(null).map(() => new Set());
+        this.hintsRemaining = 3;
+        this.updateHintUI();
         this.renderBoard();
         this.resetGameStats();
         this.startTimer();
@@ -687,12 +744,203 @@ class SudokuGame {
 
     startTimer() {
         if (this.timerInterval) clearInterval(this.timerInterval);
+        this.isPaused = false;
+        this.updatePauseUI();
+
         this.timerInterval = setInterval(() => {
-            this.timer++;
-            const minutes = Math.floor(this.timer / 60).toString().padStart(2, '0');
-            const seconds = (this.timer % 60).toString().padStart(2, '0');
-            if (this.dom.timer) this.dom.timer.textContent = `${minutes}:${seconds}`;
+            if (!this.isPaused) {
+                this.timer++;
+                const minutes = Math.floor(this.timer / 60).toString().padStart(2, '0');
+                const seconds = (this.timer % 60).toString().padStart(2, '0');
+                if (this.dom.timer) this.dom.timer.textContent = `${minutes}:${seconds}`;
+            }
         }, 1000);
+    }
+
+    togglePause() {
+        if (this.battleMode) return; // No pause in battle mode
+        if (!this.isPlaying) return;
+
+        this.isPaused = !this.isPaused;
+        this.updatePauseUI();
+    }
+
+    resumeTimer() {
+        if (this.isPaused) {
+            this.isPaused = false;
+            this.updatePauseUI();
+        }
+    }
+
+    updatePauseUI() {
+        if (this.isPaused) {
+            document.body.classList.add('game-paused');
+            if (this.dom.pauseBtn) {
+                this.dom.pauseBtn.textContent = '▶️';
+                this.dom.pauseBtn.title = 'Reprendre';
+            }
+        } else {
+            document.body.classList.remove('game-paused');
+            if (this.dom.pauseBtn) {
+                this.dom.pauseBtn.textContent = '⏸️';
+                this.dom.pauseBtn.title = 'Pause (P)';
+            }
+        }
+
+        // Hide pause button in battle mode
+        if (this.dom.pauseBtn) {
+            this.dom.pauseBtn.style.display = this.battleMode ? 'none' : 'flex';
+        }
+    }
+
+    updateHintUI() {
+        if (this.dom.hintCount) {
+            this.dom.hintCount.textContent = this.hintsRemaining;
+        }
+        if (this.dom.hintBtn) {
+            if (this.hintsRemaining <= 0 || this.battleMode) {
+                this.dom.hintBtn.classList.add('disabled');
+                this.dom.hintBtn.style.opacity = '0.5';
+                this.dom.hintBtn.style.cursor = 'not-allowed';
+            } else {
+                this.dom.hintBtn.classList.remove('disabled');
+                this.dom.hintBtn.style.opacity = '1';
+                this.dom.hintBtn.style.cursor = 'pointer';
+            }
+            // Hide in battle mode
+            this.dom.hintBtn.style.display = this.battleMode ? 'none' : 'flex';
+        }
+    }
+
+    getHint() {
+        if (this.hintsRemaining <= 0 || !this.isPlaying || this.isPaused || this.battleMode) return;
+
+        // 1. Find all empty cells
+        const emptyIndices = [];
+        this.board.forEach((val, idx) => {
+            if (val === 0) emptyIndices.push(idx);
+        });
+
+        if (emptyIndices.length === 0) return;
+
+        let bestHint = null;
+        let minCandidates = 10;
+
+        // 2. Analyze candidates for each empty cell
+        for (const idx of emptyIndices) {
+            const row = Math.floor(idx / 9);
+            const col = idx % 9;
+            let candidates = 0;
+            let validNum = 0;
+
+            for (let num = 1; num <= 9; num++) {
+                if (this.isSafe(this.board, row, col, num)) {
+                    candidates++;
+                    validNum = num;
+                }
+            }
+
+            // Found a Naked Single (only 1 possibility)
+            if (candidates === 1) {
+                bestHint = { index: idx, type: 'single' };
+                break;
+            }
+
+            if (candidates < minCandidates) {
+                minCandidates = candidates;
+                bestHint = { index: idx, type: 'fallback' };
+            }
+        }
+
+        // 3. Apply Hint
+        if (bestHint) {
+            this.hintsRemaining--;
+            this.updateHintUI();
+
+            // Visual feedback
+            const cell = this.dom.board.children[bestHint.index];
+
+            // Remove existing highlights
+            document.querySelectorAll('.hint-highlight').forEach(el => el.classList.remove('hint-highlight'));
+
+            cell.classList.add('hint-highlight');
+            this.selectCell(cell);
+
+            // Auto-remove highlight after 5 seconds
+            setTimeout(() => {
+                cell.classList.remove('hint-highlight');
+            }, 5000);
+
+            // Play sound
+            this.soundManager.playTap(); // Or specific hint sound
+
+            // Show Riddle
+            const correctValue = this.solution[bestHint.index];
+            this.showRiddle(correctValue);
+        }
+    }
+
+    showRiddle(number) {
+        const riddles = {
+            1: [
+                "Je suis le commencement, l'unique.",
+                "Seul, je me tiens debout comme un piquet.",
+                "Le premier pas de tout voyage."
+            ],
+            2: [
+                "Le couple parfait, inséparable.",
+                "Je suis le cygne sur le lac.",
+                "Un, c'est peu. Moi, c'est mieux."
+            ],
+            3: [
+                "Le trépied stable de l'univers.",
+                "Je forme le triangle parfait.",
+                "Jamais deux sans moi."
+            ],
+            4: [
+                "Je suis la chaise renversée.",
+                "Les points cardinaux me connaissent.",
+                "Le carré est ma maison."
+            ],
+            5: [
+                "Au milieu de tout, je règne.",
+                "La main ouverte me salue.",
+                "L'étoile à cinq branches."
+            ],
+            6: [
+                "La tête en bas, je suis un neuf.",
+                "L'hexagone est mon domaine.",
+                "Le dé s'arrête souvent sur moi."
+            ],
+            7: [
+                "Le chiffre magique des contes.",
+                "Je porte chance, dit-on.",
+                "Les jours de la semaine sont miens."
+            ],
+            8: [
+                "L'infini qui s'est levé.",
+                "Le bonhomme de neige éternel.",
+                "Deux cercles unis pour la vie."
+            ],
+            9: [
+                "La fin du cycle, avant le zéro.",
+                "Je suis un six qui a grandi.",
+                "Le chat a autant de vies que moi."
+            ]
+        };
+
+        const options = riddles[number];
+        const randomRiddle = options[Math.floor(Math.random() * options.length)];
+
+        if (this.dom.riddleText && this.dom.riddleToast) {
+            this.dom.riddleText.textContent = randomRiddle;
+            this.dom.riddleToast.classList.remove('hidden');
+
+            // Auto hide
+            setTimeout(() => {
+                this.dom.riddleToast.classList.add('hidden');
+            }, 6000);
+        }
     }
 
     generateBoard() {
@@ -1072,10 +1320,18 @@ class SudokuGame {
         }
     }
 
+    // Co-op Mode Method
+    startCoopMode() {
+        this.currentMode = 'coop';
+        if (this.dom.battleChoiceModal) {
+            this.dom.battleChoiceModal.classList.remove('hidden');
+        }
+    }
+
     // Battle Mode Methods
     async createBattleRoom() {
-        if (!this.battleManager) {
-            alert('Battle Manager non initialisé. Rafraîchissez la page.');
+        if (!this.battleManager && !this.coopManager) {
+            alert('Managers non initialisés. Rafraîchissez la page.');
             return;
         }
 
@@ -1090,38 +1346,65 @@ class SudokuGame {
 
         this.dom.createRoomModal.classList.add('hidden');
 
-        const result = await this.battleManager.createRoom(playerName, difficulty);
+        let result;
+        if (this.currentMode === 'coop') {
+            // Get selected game mode (lives or timer)
+            const selectedMode = document.querySelector('.mode-option-btn.active');
+            const gameMode = selectedMode ? selectedMode.dataset.mode : 'lives';
+            result = await this.coopManager.createRoom(playerName, difficulty, gameMode);
+        } else {
+            result = await this.battleManager.createRoom(playerName, difficulty);
+        }
 
         if (result.success) {
             this.dom.waitingRoomCode.textContent = result.roomCode;
             this.dom.waitingRoomModal.classList.remove('hidden');
+
+            // Update waiting room title for Co-op
+            const title = document.querySelector('#waiting-room-modal h2');
+            if (title && this.currentMode === 'coop') {
+                title.textContent = '🧬 Salon Fusion';
+            } else if (title) {
+                title.textContent = '⚔️ Salon de Bataille';
+            }
         } else {
             alert(result.error || 'Erreur lors de la création du salon');
         }
     }
 
     async joinBattleRoom() {
-        if (!this.battleManager) {
-            alert('Battle Manager non initialisé. Rafraîchissez la page.');
-            return;
-        }
+        const codeInput = document.getElementById('join-code-input');
+        const nameInput = document.getElementById('join-name-input');
 
-        const roomCode = this.dom.joinCodeInput.value.trim().toUpperCase();
-        const playerName = this.dom.joinNameInput.value.trim();
+        const roomCode = codeInput ? codeInput.value.trim().toUpperCase() : '';
+        const playerName = nameInput ? nameInput.value.trim() : '';
 
         if (!roomCode || !playerName) {
             alert('Veuillez remplir tous les champs');
             return;
         }
 
-        this.dom.joinRoomModal.classList.add('hidden');
-
-        const result = await this.battleManager.joinRoom(roomCode, playerName);
+        let result;
+        // Try to join as Co-op first, then try Battle (for flexibility)
+        // Actually, we should check if currentMode is set. If the user clicked "Join" from the choice modal,
+        // we don't know if it's Battle or Co-op. Let's try to detect from room or assume Battle by default.
+        // For simplicity, we'll use currentMode if set, otherwise default to Battle.
+        if (this.currentMode === 'coop') {
+            result = await this.coopManager.joinRoom(roomCode, playerName);
+        } else {
+            result = await this.battleManager.joinRoom(roomCode, playerName);
+        }
 
         if (result.success) {
-            // Room joined - countdown will start automatically
+            this.dom.joinRoomModal.classList.add('hidden');
+            if (this.currentMode === 'coop') {
+                this.coopMode = true;
+                this.dom.coopHud.classList.remove('hidden');
+                // Start playing immediately for Co-op
+                this.isPlaying = true;
+            }
         } else {
-            alert(result.error || 'Erreur lors de la connexion au salon');
+            alert(result.error);
         }
     }
 
@@ -1777,7 +2060,7 @@ class StatsManager {
 // Start the game
 window.addEventListener('DOMContentLoaded', () => {
     try {
-        new SudokuGame();
+        window.game = new SudokuGame();
         new MediaController();
         new ResizeController();
         new DragController();
