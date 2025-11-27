@@ -631,6 +631,7 @@ class SudokuGame {
 
     if (this.initialBoard[index] !== 0) {
       cell.classList.add("initial");
+      cell.dataset.fixed = "true"; // Ensure CSS targets this
       cell.textContent = this.initialBoard[index];
     } else if (value !== 0) {
       cell.textContent = value;

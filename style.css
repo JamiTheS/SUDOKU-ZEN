@@ -356,10 +356,11 @@ h1 {
 
 /* ... existing code ... */
 
-.game-board > div[data-fixed="true"] {
-  color: #fff; /* Fixed numbers are white */
+.game-board > div[data-fixed="true"],
+.game-board > div.initial {
+  color: #fff !important; /* Fixed numbers are white */
   font-weight: bold;
-  text-shadow: none; /* Optional: remove glow from fixed numbers if desired */
+  text-shadow: none;
 }
 
 .game-board > div.selected {
