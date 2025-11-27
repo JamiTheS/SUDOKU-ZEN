@@ -624,3 +624,139 @@ h1 {
         font-size: 1.1rem;
     }
 }
+
+/* =========================================
+   MODAL STYLES (Restored)
+   ========================================= */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  backdrop-filter: blur(5px);
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+/* Confirm modal needs higher z-index to appear above saves modal */
+#confirm-modal {
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.modal.hidden {
+  opacity: 0;
+  pointer-events: none;
+  display: none !important;
+}
+
+.modal-content {
+  background: rgba(15, 12, 41, 0.9);
+  padding: 3rem;
+  border-radius: 20px;
+  border: 1px solid var(--primary-glow);
+  text-align: center;
+  box-shadow: 0 0 50px rgba(0, 242, 255, 0.2);
+  max-width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal h2 {
+  color: var(--primary-glow);
+  margin-bottom: 1rem;
+}
+
+.modal p {
+  margin-bottom: 2rem;
+  font-size: 1.2rem;
+  white-space: pre-line;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Stats Modal Specific Styles */
+.stats-modal-content {
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.stats-section {
+  margin-bottom: 2rem;
+}
+
+.stats-section h3 {
+  color: var(--primary-color);
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+.records-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+}
+
+.record-item {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+}
+
+.record-label {
+  display: block;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 0.5rem;
+}
+
+.record-time {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.stat-item {
+    background: rgba(0,0,0,0.3);
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #fff;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.6);
+}
+
+/* Utility Classes */
+.hidden {
+    display: none !important;
+}
