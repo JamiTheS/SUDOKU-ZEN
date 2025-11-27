@@ -10,9 +10,8 @@
   --glass-border: rgba(255, 255, 255, 0.1);
   --text-color: #fff;
   --cell-bg: rgba(0, 0, 0, 0.85);
-  /* Much darker for better text contrast */
   --cell-hover: rgba(255, 255, 255, 0.1);
-  --cell-size: clamp(30px, 8vw, 50px);
+  --cell-size: 50px; /* Fixed size for desktop */
   --gap: 2px;
 }
 
@@ -25,7 +24,6 @@ body.theme-pink {
   --bg-gradient-2: #632b4e;
   --bg-gradient-3: #3e2432;
   --cell-bg: rgba(10, 0, 5, 0.9);
-  /* Much darker for pink theme */
 }
 
 body.theme-green {
@@ -36,7 +34,6 @@ body.theme-green {
   --bg-gradient-2: #003300;
   --bg-gradient-3: #001a00;
   --cell-bg: rgba(0, 10, 0, 0.9);
-  /* Much darker for green theme */
 }
 
 body.theme-gold {
@@ -47,7 +44,6 @@ body.theme-gold {
   --bg-gradient-2: #634e2b;
   --bg-gradient-3: #3e3224;
   --cell-bg: rgba(15, 10, 0, 0.9);
-  /* Much darker for gold theme */
 }
 
 * {
@@ -69,13 +65,11 @@ body {
   animation: gradientBG 25s ease infinite;
   color: var(--text-color);
   overflow-y: auto;
-  /* Allow vertical scrolling */
-  display: block; /* Changed from flex to block to fix mobile layout */
+  display: block;
   padding: 2rem 0;
-  /* Add some vertical spacing */
 }
 
-/* Animated Background - Slowed down significantly */
+/* Animated Background */
 .background-animation {
   position: fixed;
   top: 0;
@@ -89,17 +83,9 @@ body {
 }
 
 @keyframes gradientBG {
-  0% {
-    background-position: 0% 50%;
-  }
-
-  50% {
-    background-position: 100% 50%;
-  }
-
-  100% {
-    background-position: 0% 50%;
-  }
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 .container {
@@ -110,7 +96,7 @@ body {
   padding: 2rem;
   width: 100%;
   max-width: 1200px;
-  margin: 0 auto; /* Center the container */
+  margin: 0 auto;
   backdrop-filter: blur(20px);
   border-radius: 20px;
   background: rgba(15, 12, 41, 0.75);
@@ -128,12 +114,13 @@ h1 {
   font-size: 3rem;
   margin-bottom: 1rem;
   letter-spacing: 2px;
+  text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
 }
 
-.glow {
-  color: var(--primary-glow);
-  /* Reduced text shadow for better readability */
-  text-shadow: 0 0 5px var(--primary-glow);
+.neon-text {
+  color: var(--primary-color);
+  text-shadow: 0 0 5px var(--primary-color), 0 0 10px var(--primary-color),
+    0 0 20px var(--primary-color);
 }
 
 .header-controls {
@@ -169,21 +156,10 @@ h1 {
   border-color: #fff;
 }
 
-.theme-blue {
-  background: #00f3ff;
-}
-
-.theme-pink {
-  background: #ff00cc;
-}
-
-.theme-green {
-  background: #00ff00;
-}
-
-.theme-gold {
-  background: #ffd700;
-}
+.theme-blue { background: #00f3ff; }
+.theme-pink { background: #ff00cc; }
+.theme-green { background: #00ff00; }
+.theme-gold { background: #ffd700; }
 
 .icon-btn {
   background: none;
@@ -200,9 +176,7 @@ h1 {
 }
 
 /* Profile Selector */
-.profile-selector {
-  position: relative;
-}
+.profile-selector { position: relative; }
 
 .profile-btn {
   background: rgba(0, 0, 0, 0.3);
@@ -214,6 +188,8 @@ h1 {
   align-items: center;
   gap: 0.5rem;
   white-space: nowrap;
+  color: #fff;
+  cursor: pointer;
 }
 
 .profile-btn:hover {
@@ -235,9 +211,7 @@ h1 {
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
 }
 
-.profile-dropdown.hidden {
-  display: none;
-}
+.profile-dropdown.hidden { display: none; }
 
 .profile-dropdown-header {
   font-size: 0.8rem;
@@ -260,9 +234,7 @@ h1 {
   color: rgba(255, 255, 255, 0.9);
 }
 
-.profile-item:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
+.profile-item:hover { background: rgba(255, 255, 255, 0.1); }
 
 .profile-item.active {
   background: rgba(0, 242, 255, 0.2);
@@ -319,28 +291,14 @@ h1 {
   align-items: center;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  color: #fff;
 }
 
 #pause-btn:hover {
   background: rgba(255, 255, 255, 0.2);
   transform: scale(1.1);
-}
-
-.game-paused .game-board {
-  filter: blur(10px);
-  pointer-events: none;
-  opacity: 0.5;
-}
-
-.game-paused .controls {
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-/* Allow pause button to be clicked even when controls are disabled */
-.game-paused .status-bar {
-  pointer-events: auto;
-  opacity: 1;
 }
 
 .timer {
@@ -351,18 +309,11 @@ h1 {
   text-shadow: 0 0 10px var(--primary-glow);
 }
 
-h1 {
-  font-size: 2.5rem;
-  letter-spacing: 2px;
-  text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+.difficulty-display {
+  color: rgba(255, 255, 255, 0.7);
 }
 
-.neon-text {
-  color: var(--primary-color);
-  text-shadow: 0 0 5px var(--primary-color), 0 0 10px var(--primary-color),
-    0 0 20px var(--primary-color);
-}
-
+/* Game Area Layout */
 .game-area {
   display: flex;
   gap: 2rem;
@@ -372,36 +323,176 @@ h1 {
   width: 100%;
 }
 
-/* =========================================
-   CLEAN MOBILE & DESKTOP SEPARATION
-   ========================================= */
-
-/* Hide mobile elements on desktop */
-@media (min-width: 769px) {
-    .mobile-only {
-        display: none !important;
-    }
+/* SUDOKU GRID - DESKTOP FIXED SIZE */
+.game-board {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  background: var(--cell-bg);
+  border: 3px solid var(--primary-color);
+  border-radius: 8px;
+  padding: 0;
+  gap: 0 !important;
+  box-shadow: 0 0 30px rgba(0, 243, 255, 0.3);
+  width: 450px;
+  height: 450px;
+  margin: 0 auto;
 }
 
-/* MOBILE CSS TEMPORARILY DISABLED FOR DESKTOP DEPLOYMENT */
-/* Will be re-enabled after desktop version is stable */
-
-/* =========================================Adjustments for very small screens */
-@media (max-height: 700px) and (max-width: 768px) {
-    .game-board {
-        max-width: min(90vw, 50vh);
-    }
-    
-    .num-btn,
-    .action-btn {
-        padding: 0.8rem 0;
-        font-size: 1.1rem;
-    }
+.game-board > div {
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: var(--cell-bg);
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: var(--text-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  height: 100%;
 }
 
-/* =========================================
-   MODAL STYLES (Restored)
-   ========================================= */
+/* Thick borders for 3x3 block separators */
+.game-board > div:nth-child(9n+3),
+.game-board > div:nth-child(9n+6) {
+  border-right: 3px solid var(--primary-color) !important;
+}
+
+.game-board > div:nth-child(n+19):nth-child(-n+27),
+.game-board > div:nth-child(n+46):nth-child(-n+54) {
+  border-bottom: 3px solid var(--primary-color) !important;
+}
+
+.game-board > div:hover {
+  background: var(--cell-hover);
+  transform: scale(1.05);
+}
+
+.game-board > div[data-fixed="true"] {
+  color: #fff;
+  font-weight: bold;
+}
+
+.game-board > div.selected {
+  background: rgba(0, 243, 255, 0.3) !important;
+  box-shadow: 0 0 15px rgba(0, 243, 255, 0.5);
+}
+
+.game-board > div.error {
+  background: rgba(255, 0, 0, 0.3) !important;
+  animation: shake 0.3s;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* Controls (Desktop Sidebar) */
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 250px;
+}
+
+.numpad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.num-btn, .action-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 1rem 0;
+  font-size: 1.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.num-btn:hover, .action-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: var(--primary-color);
+}
+
+.difficulty-selector {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.diff-btn {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.7);
+  padding: 0.8rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.diff-btn.active {
+  background: var(--primary-color);
+  color: #000;
+  font-weight: bold;
+  box-shadow: 0 0 15px var(--primary-glow);
+}
+
+.new-game-btn {
+  background: linear-gradient(45deg, #00f3ff, #0066ff);
+  border: none;
+  color: #fff;
+  padding: 1rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.3s;
+  box-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
+}
+
+.new-game-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 30px rgba(0, 243, 255, 0.5);
+}
+
+/* Bottom Controls */
+.bottom-controls {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.bottom-controls .action-btn {
+  padding: 0.8rem 1.5rem;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.battle-btn {
+  background: linear-gradient(45deg, #ff00cc, #3333ff);
+  border: none;
+}
+
+.coop-btn {
+  background: linear-gradient(45deg, #00ff00, #00ccff);
+  border: none;
+  color: #000;
+}
+
+/* Modals (Standard Desktop) */
 .modal {
   position: fixed;
   top: 0;
@@ -418,12 +509,6 @@ h1 {
   transition: opacity 0.3s ease;
 }
 
-/* Confirm modal needs higher z-index to appear above saves modal */
-#confirm-modal {
-  z-index: 200;
-  background: rgba(0, 0, 0, 0.9);
-}
-
 .modal.hidden {
   opacity: 0;
   pointer-events: none;
@@ -437,7 +522,8 @@ h1 {
   border: 1px solid var(--primary-glow);
   text-align: center;
   box-shadow: 0 0 50px rgba(0, 242, 255, 0.2);
-  max-width: 90%;
+  max-width: 600px;
+  width: 90%;
   max-height: 90vh;
   overflow-y: auto;
 }
@@ -460,306 +546,110 @@ h1 {
   flex-wrap: wrap;
 }
 
-/* Stats Modal Specific Styles */
+.primary-btn, .secondary-btn, .danger-btn {
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  border: none;
+  transition: all 0.2s;
+}
+
+.primary-btn {
+  background: var(--primary-color);
+  color: #000;
+}
+
+.secondary-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.danger-btn {
+  background: #ff3333;
+  color: #fff;
+}
+
+/* Stats Modal */
 .stats-modal-content {
   max-width: 600px;
-  width: 90%;
-  max-height: 80vh;
-  overflow-y: auto;
-}
-
-.stats-section {
-  margin-bottom: 2rem;
-}
-
-.stats-section h3 {
-  color: var(--primary-color);
-  margin-bottom: 1rem;
-  font-size: 1.2rem;
-}
-
-.records-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 1rem;
-}
-
-.record-item {
-  background: rgba(0, 0, 0, 0.3);
-  padding: 1rem;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  text-align: center;
-}
-
-.record-label {
-  display: block;
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.6);
-  margin-bottom: 0.5rem;
-}
-
-.record-time {
-  display: block;
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: var(--primary-color);
 }
 
 .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
 }
 
 .stat-item {
-    background: rgba(0,0,0,0.3);
-    padding: 1rem;
-    border-radius: 8px;
-    text-align: center;
+  background: rgba(0,0,0,0.3);
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
 }
 
 .stat-value {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #fff;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #fff;
 }
 
 .stat-label {
-    font-size: 0.8rem;
-    color: rgba(255,255,255,0.6);
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.6);
 }
 
-/* Utility Classes */
-.hidden {
-    display: none !important;
+/* Utility */
+.hidden { display: none !important; }
+
+/* Resizer & Media Player (Desktop Features) */
+.resizer {
+  width: 10px;
+  cursor: col-resize;
+  background: rgba(255, 255, 255, 0.1);
+  transition: background 0.3s;
+}
+.resizer:hover { background: var(--primary-color); }
+
+.media-container {
+  width: 0;
+  background: rgba(0, 0, 0, 0.5);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: width 0.3s ease;
+  position: relative;
 }
 
-/* PWA Standalone Specifics */
-@media all and (display-mode: standalone) {
-    body {
-        height: 100vh;
-        height: 100dvh;
-        overflow: hidden;
-    }
-    
-    .container {
-        padding-top: max(10px, env(safe-area-inset-top));
-        padding-bottom: max(10px, env(safe-area-inset-bottom));
-    }
+.media-controls {
+  padding: 10px;
+  display: flex;
+  gap: 5px;
+  background: rgba(0, 0, 0, 0.8);
 }
 
-/* =========================================
-   BOTTOM NAVIGATION BAR (Mobile Only)
-   ========================================= */
-/* Mobile Nav CSS REMOVED */
-
-/* =========================================
-   MOBILE SETTINGS MODAL
-   ========================================= */
-.settings-modal {
-    background: rgba(0, 0, 0, 0.95);
+.media-controls input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 4px;
 }
 
-.settings-modal-content {
-    max-width: 100%;
-    width: 100%;
-    height: 100%;
-    max-height: 100%;
-    padding: 60px 20px 100px;
-    border-radius: 0;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
+.video-wrapper {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
 }
 
-.settings-modal-content h2 {
-    text-align: center;
-    font-size: 1.8rem;
-    margin-bottom: 1rem;
+iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
 }
-
-.close-modal-btn {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    z-index: 201;
-    font-size: 2rem;
-    background: rgba(0,0,0,0.7);
-    border: 2px solid var(--primary-color);
-    color: #fff;
-    cursor: pointer;
-    padding: 0;
-    border-radius: 50%;
-    width: 45px;
-    height: 45px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.settings-section {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 1.5rem;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.settings-section label {
-    display: block;
-    color: rgba(255, 255, 255, 0.7);
-    margin-bottom: 1rem;
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.settings-theme-selector {
-    display: flex;
-    gap: 15px;
-    justify-content: center;
-}
-
-.settings-theme-selector .theme-btn {
-    width: 50px;
-    height: 50px;
-    padding: 0;
-    font-size: 1.5rem;
-    border-radius: 50%;
-    border: 3px solid rgba(255, 255, 255, 0.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.settings-difficulty-selector {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-}
-
-.settings-difficulty-selector .diff-btn {
-    padding: 0.8rem;
-    font-size: 0.9rem;
-}
-
-.settings-btn {
-    width: 100%;
-    padding: 1rem;
-    margin-bottom: 0.8rem;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #fff;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    transition: all 0.3s;
-}
-
-.settings-btn span:first-child {
-    font-size: 1.5rem;
-}
-
-.settings-btn:hover, .settings-btn:active {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: var(--primary-color);
-}
-
-.settings-btn:last-child {
-    margin-bottom: 0;
-}
-
-/* =========================================
-   SUDOKU GRID BORDERS (Critical for Mobile)
-   ========================================= */
-.game-board {
-    display: grid;
-    grid-template-columns: repeat(9, 1fr);
-    background: var(--cell-bg);
-    border: 3px solid var(--primary-color);
-    border-radius: 8px;
-    padding: 0;
-    gap: 0 !important;
-    box-shadow: 0 0 30px rgba(0, 243, 255, 0.3);
-}
-
-.game-board > div {
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    background: var(--cell-bg);
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: clamp(1rem, 4vw, 1.5rem);
-    font-weight: 500;
-    color: var(--text-color);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    min-height: 40px;
-}
-
-/* Thick borders for 3x3 block separators */
-/* Right border for every 3rd column (3, 6) - NOT 9 */
-.game-board > div:nth-child(9n+3),
-.game-board > div:nth-child(9n+6) {
-    border-right: 3px solid var(--primary-color) !important;
-}
-
-/* Bottom border for rows 3 and 6 */
-.game-board > div:nth-child(n+19):nth-child(-n+27),
-.game-board > div:nth-child(n+46):nth-child(-n+54) {
-    border-bottom: 3px solid var(--primary-color) !important;
-}
-
-.game-board > div:hover {
-    background: var(--cell-hover);
-    transform: scale(1.05);
-}
-
-.game-board > div[data-fixed="true"] {
-    color: #fff;
-    font-weight: bold;
-}
-
-.game-board > div.selected {
-    background: rgba(0, 243, 255, 0.3) !important;
-    box-shadow: 0 0 15px rgba(0, 243, 255, 0.5);
-}
-
-.game-board > div.error {
-    background: rgba(255, 0, 0, 0.3) !important;
-    animation: shake 0.3s;
-}
-
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    75% { transform: translateX(5px); }
-}
-
-/* =========================================
-   MOBILE MODAL NUMPAD
-   ========================================= */
-.modal-numpad {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: linear-gradient(180deg, rgba(15, 12, 41, 0.98) 0%, rgba(15, 12, 41, 1) 100%);
-    border-top: 2px solid var(--primary-color);
-    padding: 20px;
-    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0));
-    transform: translateY(100%);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 2000;
-    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.8);
-    display: none;
-}
-
-/* Mobile Modal Numpad CSS REMOVED */
-
-/* Modal Numpad CSS REMOVED */

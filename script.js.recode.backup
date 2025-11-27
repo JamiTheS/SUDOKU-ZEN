@@ -437,7 +437,98 @@ class SudokuGame {
       });
     }
 
-    // Mobile setup removed
+    // ===== BOTTOM NAVIGATION SYSTEM =====
+    // this.setupBottomNav();
+
+    // ===== MOBILE MODAL NUMPAD =====
+    // this.setupMobileModalNumpad();
+  }
+
+  /* 
+  setupMobileModalNumpad() {
+    // Mobile code removed for now
+  }
+  */
+
+  showModalNumpad() {
+    const modal = document.getElementById("modal-numpad");
+    if (modal) {
+      modal.classList.add("visible");
+    }
+  }
+
+  hideModalNumpad() {
+    const modal = document.getElementById("modal-numpad");
+    if (modal) {
+      modal.classList.remove("visible");
+    }
+  }
+
+  clearCell() {
+    if (this.selectedCell && this.selectedCell.dataset.fixed !== "true") {
+      const row = Math.floor(this.selectedCellIndex / 9);
+      const col = this.selectedCellIndex % 9;
+      this.placeNumber(row, col, 0);
+      this.hideModalNumpad();
+    }
+  }
+
+  setupBottomNav() {
+    const navItems = document.querySelectorAll(".nav-item");
+    const settingsModal = document.getElementById("settings-modal");
+    const settingsModalClose = document.getElementById("settings-modal-close");
+
+    navItems.forEach((item) => {
+      item.addEventListener("click", () => {
+        const tab = item.dataset.tab;
+        this.switchTab(tab);
+
+        // Update active state
+        navItems.forEach((i) => i.classList.remove("active"));
+        item.classList.add("active");
+      });
+    });
+
+    // Settings modal close
+    if (settingsModalClose) {
+      settingsModalClose.addEventListener("click", () => {
+        settingsModal.classList.add("hidden");
+      });
+    }
+
+    // Wire Settings modal buttons to desktop counterparts
+    this.setupSettingsModalButtons();
+  }
+
+  switchTab(tab) {
+    const settingsModal = document.getElementById("settings-modal");
+    const battleModal = document.getElementById("battle-choice-modal");
+    const coopModal = document.getElementById("create-room-modal");
+
+    switch (tab) {
+      case "home":
+        // Close settings modal if open
+        if (settingsModal && !settingsModal.classList.contains("hidden")) {
+          settingsModal.classList.add("hidden");
+        }
+        break;
+      case "fusion":
+        // Open coop modal directly
+        if (coopModal) {
+          coopModal.classList.remove("hidden");
+        }
+        break;
+      case "battle":
+        // Open battle modal directly
+        if (battleModal) {
+          battleModal.classList.remove("hidden");
+        }
+        break;
+      case "settings":
+        // Open settings modal
+        settingsModal?.classList.remove("hidden");
+        break;
+    }
   }
 
   setupSettingsModalButtons() {

@@ -276,6 +276,57 @@
         </div>
     </div>
 
+    <!-- Mobile Settings Modal (Full Screen) -->
+    <div id="settings-modal" class="modal hidden settings-modal">
+        <div class="modal-content settings-modal-content">
+            <button id="settings-modal-close" class="close-modal-btn">×</button>
+            <h2>⚙️ Réglages</h2>
+            
+            <div class="settings-section">
+                <label>Thème</label>
+                <div class="settings-theme-selector">
+                    <button class="theme-btn theme-blue active" data-theme="blue" title="Bleu">🔵</button>
+                    <button class="theme-btn theme-pink" data-theme="pink" title="Rose">🌸</button>
+                    <button class="theme-btn theme-green" data-theme="green" title="Vert">🟢</button>
+                    <button class="theme-btn theme-gold" data-theme="gold" title="Or">🟡</button>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <label>Profil</label>
+                <button id="settings-profile-btn" class="settings-btn">
+                    <span>👤</span>
+                    <span>Gérer les profils</span>
+                </button>
+            </div>
+
+            <div class="settings-section">
+                <label>Difficulté</label>
+                <div class="settings-difficulty-selector">
+                    <button class="diff-btn" data-diff="easy">Facile</button>
+                    <button class="diff-btn active" data-diff="medium">Moyen</button>
+                    <button class="diff-btn" data-diff="hard">Difficile</button>
+                    <button class="diff-btn" data-diff="expert">Expert</button>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <button id="settings-stats-btn" class="settings-btn">
+                    <span>📊</span>
+                    <span>Statistiques</span>
+                </button>
+                <button id="settings-saves-btn" class="settings-btn">
+                    <span>💾</span>
+                    <span>Sauvegardes</span>
+                </button>
+                <button id="settings-sound-btn" class="settings-btn">
+                    <span id="settings-sound-icon">🔊</span>
+                    <span>Son</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Battle Mode Modals -->
     <div id="battle-choice-modal" class="modal hidden">
         <div class="modal-content profile-modal-content">
@@ -357,6 +408,15 @@
         </div>
         <div id="countdown" class="countdown hidden">3</div>
     </div>
+
+    <script src="battle-manager.js"></script>
+    <script src="script.js"></script>
+
+    <!-- Mobile Modal Numpad REMOVED -->
+    <!-- Bottom Navigation Bar REMOVED -->
+
+    <!-- Bottom Navigation Bar (Mobile Only) -->
+    <!-- Bottom Navigation Bar REMOVED -->
 </body>
 
 </html>
