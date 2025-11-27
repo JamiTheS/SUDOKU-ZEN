@@ -1831,7 +1831,6 @@ class MediaController {
   }
 
   toggleMedia() {
-  toggleMedia() {
     this.container.classList.toggle("hidden");
     const resizer = document.getElementById("resizer");
 
