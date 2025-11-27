@@ -448,14 +448,20 @@ class SudokuGame {
     if (window.innerWidth > 768) return;
 
     const modalNumpad = document.getElementById("modal-numpad");
-    if (!modalNumpad) return;
+    const board = document.querySelector(".game-board");
+
+    if (!modalNumpad || !board) {
+      console.log("Modal numpad setup skipped - elements not found");
+      return;
+    }
+
+    console.log("Setting up mobile modal numpad");
 
     // Wire number buttons
     modalNumpad.querySelectorAll(".modal-num-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         const value = btn.dataset.value;
         if (this.selectedCell) {
-          // Use existing placeNumber logic
           const row = Math.floor(this.selectedCellIndex / 9);
           const col = this.selectedCellIndex % 9;
           this.placeNumber(row, col, parseInt(value));
@@ -464,15 +470,22 @@ class SudokuGame {
       });
     });
 
-    // Add tap listeners to cells
-    this.board.querySelectorAll("div").forEach((cell, index) => {
-      cell.addEventListener("click", () => {
-        if (cell.dataset.fixed === "true") return;
-        this.selectedCellIndex = index;
-        this.selectedCell = cell;
-        this.showModalNumpad();
+    // Add tap listeners to cells - use a timeout to ensure cells exist
+    setTimeout(() => {
+      const cells = board.querySelectorAll("div");
+      console.log(`Adding tap listeners to ${cells.length} cells`);
+
+      cells.forEach((cell, index) => {
+        cell.addEventListener("click", (e) => {
+          console.log("Cell clicked:", index, "fixed:", cell.dataset.fixed);
+          if (cell.dataset.fixed === "true") return;
+
+          this.selectedCellIndex = index;
+          this.selectedCell = cell;
+          this.showModalNumpad();
+        });
       });
-    });
+    }, 500);
   }
 
   showModalNumpad() {
@@ -578,12 +591,19 @@ class SudokuGame {
       .forEach((btn) => {
         btn.addEventListener("click", () => {
           const diff = btn.dataset.diff;
-          const desktopDiffBtn = document.querySelector(
-            `.controls .difficulty-selector .diff-btn[data-diff="${diff}"]`
-          );
-          if (desktopDiffBtn) {
-            desktopDiffBtn.click();
-          }
+
+          // Update active state in settings modal
+          document
+            .querySelectorAll(".settings-difficulty-selector .diff-btn")
+            .forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+
+          // Set difficulty directly
+          this.difficulty = diff;
+          this.newGame();
+
+          // Close settings modal
+          document.getElementById("settings-modal")?.classList.add("hidden");
         });
       });
 

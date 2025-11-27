@@ -791,19 +791,8 @@ h1 {
     min-height: 40px;
 }
 
-/* Thick borders for 3x3 blocks */
-.game-board > div:nth-child(9n+1),
-.game-board > div:nth-child(9n+2),
-.game-board > div:nth-child(9n+3) {
-    border-right: 2px solid var(--primary-color);
-}
-
-.game-board > div:nth-child(n+19):nth-child(-n+27),
-.game-board > div:nth-child(n+46):nth-child(-n+54) {
-    border-bottom: 2px solid var(--primary-color);
-}
-
-/* Right border for columns 3 and 6 */
+/* Thick borders for 3x3 block separators */
+/* Right border for every 3rd column (3, 6) - NOT 9 */
 .game-board > div:nth-child(9n+3),
 .game-board > div:nth-child(9n+6) {
     border-right: 3px solid var(--primary-color) !important;
