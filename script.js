@@ -469,9 +469,14 @@ class SudokuGame {
   }
 
   switchTab(tab) {
+    const settingsModal = document.getElementById("settings-modal");
+
     switch (tab) {
       case "home":
-        // Already on home, do nothing
+        // Close settings modal if open
+        if (settingsModal && !settingsModal.classList.contains("hidden")) {
+          settingsModal.classList.add("hidden");
+        }
         break;
       case "fusion":
         // Trigger coop button
@@ -483,7 +488,7 @@ class SudokuGame {
         break;
       case "settings":
         // Open settings modal
-        document.getElementById("settings-modal")?.classList.remove("hidden");
+        settingsModal?.classList.remove("hidden");
         break;
     }
   }
