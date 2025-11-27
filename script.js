@@ -55,6 +55,7 @@ class SudokuGame {
     this.statsManager = new StatsManager(this.profileManager);
     this.battleManager = new BattleManager(this);
     this.coopManager = new CoopManager(this);
+    this.mediaController = new MediaController();
 
     // Wait for Firebase to be ready before initializing BattleManager
     // This block is now removed as managers are initialized directly.
