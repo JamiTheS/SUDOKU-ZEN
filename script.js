@@ -460,12 +460,29 @@ class SudokuGame {
     // Wire number buttons
     modalNumpad.querySelectorAll(".modal-num-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
-        const value = btn.dataset.value;
+        const value = parseInt(btn.dataset.value);
+        console.log(
+          "Number button clicked:",
+          value,
+          "Cell index:",
+          this.selectedCellIndex
+        );
+
         if (this.selectedCell) {
           const row = Math.floor(this.selectedCellIndex / 9);
           const col = this.selectedCellIndex % 9;
-          this.placeNumber(row, col, parseInt(value));
+
+          console.log("Placing number at row:", row, "col:", col);
+
+          // Use handleCellClick which properly manages the game state
+          this.handleCellClick(row, col, value);
+
+          // Remove selected class
+          document
+            .querySelectorAll(".game-board > div")
+            .forEach((c) => c.classList.remove("selected"));
         }
+
         this.hideModalNumpad();
       });
     });
@@ -591,6 +608,7 @@ class SudokuGame {
       .forEach((btn) => {
         btn.addEventListener("click", () => {
           const diff = btn.dataset.diff;
+          console.log("Difficulty button clicked:", diff);
 
           // Update active state in settings modal
           document
@@ -598,12 +616,23 @@ class SudokuGame {
             .forEach((b) => b.classList.remove("active"));
           btn.classList.add("active");
 
-          // Set difficulty directly
+          // Update difficulty and start new game
           this.difficulty = diff;
+
+          // Update desktop difficulty display if visible
+          const diffDisplay = document.getElementById("current-difficulty");
+          if (diffDisplay) {
+            diffDisplay.textContent =
+              diff.charAt(0).toUpperCase() + diff.slice(1);
+          }
+
+          // Start new game with new difficulty
           this.newGame();
 
           // Close settings modal
           document.getElementById("settings-modal")?.classList.add("hidden");
+
+          console.log("New game started with difficulty:", this.difficulty);
         });
       });
 
