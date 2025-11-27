@@ -1831,23 +1831,30 @@ class MediaController {
   }
 
   toggleMedia() {
-    this.container.classList.toggle("hidden");
     const resizer = document.getElementById("resizer");
+    const isHidden = this.container.classList.contains("hidden");
 
-    if (this.container.classList.contains("hidden")) {
-      // HIDDEN STATE
-      this.toggleBtn.textContent = "📺 Mode Multitâche";
-      this.container.style.width = "0";
-      this.container.style.flex = "none";
-      if (resizer) resizer.classList.add("hidden");
-    } else {
-      // VISIBLE STATE
+    if (isHidden) {
+      // OPENING
+      this.container.classList.remove("hidden");
       this.toggleBtn.textContent = "Fermer Multitâche";
-      this.container.style.width = "400px"; // Default width
-      this.container.style.flex = "none"; // Use width, not flex
+
+      // Force a reflow before setting width for transition
+      void this.container.offsetWidth;
+
+      this.container.style.width = "400px";
+      this.container.style.flex = "none";
+
       if (!this.isFloating && resizer) {
         resizer.classList.remove("hidden");
       }
+    } else {
+      // CLOSING
+      this.container.classList.add("hidden");
+      this.toggleBtn.textContent = "📺 Mode Multitâche";
+      this.container.style.width = "0";
+
+      if (resizer) resizer.classList.add("hidden");
     }
   }
 
