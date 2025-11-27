@@ -1481,3 +1481,134 @@ button:hover {
     text-shadow: 0 0 5px rgba(255, 255, 255, 0.5) !important;
     /* White/Silver for fixed numbers in Co-op */
 }
+/* =========================================
+   MOBILE OPTIMIZATION (iPhone / Small Screens)
+   ========================================= */
+
+@media (max-width: 480px) {
+    body {
+        padding: 0;
+        align-items: flex-start;
+        overflow-x: hidden;
+    }
+
+    .app-wrapper {
+        padding: 0;
+        gap: 0;
+    }
+
+    .container {
+        padding: 10px;
+        border-radius: 0;
+        border: none;
+        background: rgba(15, 12, 41, 0.95);
+        min-height: 100vh;
+        gap: 1rem;
+    }
+
+    header {
+        margin-bottom: 0.5rem;
+    }
+
+    h1 {
+        font-size: 1.8rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .header-controls {
+        position: static;
+        transform: none;
+        justify-content: center;
+        margin-top: 0.5rem;
+    }
+
+    .theme-selector {
+        transform: scale(0.9);
+    }
+
+    .status-bar {
+        padding: 0;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .timer {
+        font-size: 1.2rem;
+    }
+
+    /* Game Board Optimization */
+    .game-board {
+        width: 100%;
+        max-width: 100%;
+        gap: 1px;
+        padding: 1px;
+    }
+
+    .cell {
+        font-size: 1.2rem;
+    }
+
+    .note-num {
+        font-size: 0.5rem;
+    }
+
+    /* Controls Optimization */
+    .controls {
+        width: 100%;
+        max-width: 100%;
+        gap: 0.8rem;
+    }
+
+    .numpad {
+        gap: 4px;
+    }
+
+    .num-btn {
+        padding: 0.8rem 0;
+        font-size: 1.2rem;
+    }
+
+    .action-btn {
+        padding: 0.8rem 0;
+    }
+
+    .difficulty-selector {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 5px;
+    }
+
+    .diff-btn {
+        padding: 0.5rem;
+        font-size: 0.8rem;
+    }
+
+    .new-game-btn {
+        padding: 0.8rem;
+        font-size: 0.9rem;
+    }
+
+    /* Bottom Controls */
+    .bottom-controls {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 2rem; /* Space for home bar */
+    }
+
+    .bottom-controls button {
+        font-size: 0.75rem;
+        padding: 0.6rem;
+    }
+
+    /* Modals */
+    .modal-content {
+        width: 95%;
+        padding: 1.5rem;
+    }
+
+    /* Hide non-essential elements on very small screens if needed */
+    .background-animation {
+        /* Optional: disable complex animation for performance */
+    }
+}
