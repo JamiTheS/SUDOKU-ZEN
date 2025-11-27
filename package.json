@@ -1,0 +1,26 @@
+{
+  "name": "sudoku",
+  "version": "1.0.0",
+  "main": "battle-manager.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "mkdir -p www && cp index.html style.css battle-styles.css script.js battle-manager.js coop-manager.js manifest.json sw.js icon.png www/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JamiTheS/SUDOKU-ZEN.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JamiTheS/SUDOKU-ZEN/issues"
+  },
+  "homepage": "https://github.com/JamiTheS/SUDOKU-ZEN#readme",
+  "description": "",
+  "dependencies": {
+    "@capacitor/cli": "^7.4.4",
+    "@capacitor/core": "^7.4.4",
+    "@capacitor/ios": "^7.4.4"
+  }
+}
