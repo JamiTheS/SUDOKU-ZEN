@@ -449,6 +449,7 @@ class SudokuGame {
     // Open menu
     if (mobileMenuBtn && mobileMenu) {
       mobileMenuBtn.addEventListener("click", () => {
+        mobileMenu.style.display = "flex";
         mobileMenu.classList.remove("hidden-mobile");
       });
     }
@@ -456,6 +457,7 @@ class SudokuGame {
     // Close menu
     const closeMenu = () => {
       if (mobileMenu) {
+        mobileMenu.style.display = "none";
         mobileMenu.classList.add("hidden-mobile");
       }
     };

@@ -425,7 +425,7 @@ h1 {
     }
 
     .mobile-menu.hidden-mobile {
-        transform: translateX(100%);
+        display: none !important;
     }
 
     .mobile-menu-close {
