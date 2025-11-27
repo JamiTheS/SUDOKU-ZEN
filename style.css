@@ -410,14 +410,14 @@ h1 {
     }
 }
 
-/* Desktop: ensure grid is NOT affected by mobile styles */
+/* Desktop: ensure grid has proper size */
 @media (min-width: 769px) {
     .game-board {
-        width: auto !important;
-        height: auto !important;
-        max-width: none !important;
-        max-height: none !important;
-        margin: 0 !important;
+        width: 450px;
+        height: 450px;
+        max-width: 450px;
+        max-height: 450px;
+        margin: 0 auto;
     }
 }
 
