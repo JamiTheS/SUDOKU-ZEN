@@ -1831,16 +1831,21 @@ class MediaController {
   }
 
   toggleMedia() {
+  toggleMedia() {
     this.container.classList.toggle("hidden");
     const resizer = document.getElementById("resizer");
 
     if (this.container.classList.contains("hidden")) {
+      // HIDDEN STATE
       this.toggleBtn.textContent = "📺 Mode Multitâche";
-      document.getElementById("game-container").style.flex = "1";
-      this.container.style.flex = "1";
+      this.container.style.width = "0";
+      this.container.style.flex = "none";
       if (resizer) resizer.classList.add("hidden");
     } else {
+      // VISIBLE STATE
       this.toggleBtn.textContent = "Fermer Multitâche";
+      this.container.style.width = "400px"; // Default width
+      this.container.style.flex = "none"; // Use width, not flex
       if (!this.isFloating && resizer) {
         resizer.classList.remove("hidden");
       }

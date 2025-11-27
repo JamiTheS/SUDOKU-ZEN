@@ -104,6 +104,14 @@ body {
   border: 1px solid var(--glass-border);
 }
 
+.app-wrapper {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+}
+
 header {
   text-align: center;
   width: 100%;
