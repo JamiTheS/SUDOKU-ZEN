@@ -92,28 +92,29 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
-  padding: 2rem;
+  gap: 1rem; /* Reduced from 1.5rem */
+  padding: 1rem; /* Reduced from 2rem */
   /* Flex item properties */
   flex: 1;
-  width: auto; /* Allow flex to control width */
-  min-width: 0; /* Allow shrinking */
-  max-width: 100%; /* Remove fixed max-width constraint for flex */
-  margin: 0; /* Remove auto margin */
+  width: auto;
+  min-width: 0;
+  max-width: 1400px; /* Added max-width for better layout control */
+  margin: 0;
   
   backdrop-filter: blur(20px);
-  border-radius: 0; /* Remove radius for full screen feel or keep it? Let's keep it but maybe adjust */
+  border-radius: 0;
   background: rgba(15, 12, 41, 0.75);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
-  border: none; /* Remove border for cleaner look in split view */
+  border: none;
   border-right: 1px solid var(--glass-border);
-  overflow-y: auto; /* Scroll inside container */
+  overflow-y: visible; /* Changed from auto for better layout */
 }
 
 .app-wrapper {
   display: flex;
   width: 100%;
-  height: 100vh;
+  min-height: 100vh; /* Changed from fixed height */
+  height: auto;
   overflow: hidden;
   position: relative;
 }
@@ -125,8 +126,8 @@ header {
 }
 
 h1 {
-  font-size: 3rem;
-  margin-bottom: 1rem;
+  font-size: 2.5rem; /* Reduced from 3rem */
+  margin-bottom: 0.5rem; /* Reduced from 1rem */
   letter-spacing: 2px;
   text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
 }
@@ -285,7 +286,7 @@ h1 {
   align-items: center;
   width: 100%;
   max-width: 500px;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem; /* Reduced from 1rem */
   padding: 0 1rem;
 }
 
@@ -330,8 +331,8 @@ h1 {
 /* Game Area Layout */
 .game-area {
   display: flex;
-  gap: 2rem;
-  flex-wrap: nowrap;
+  gap: 1.5rem; /* Reduced from 2rem */
+  flex-wrap: wrap; /* Changed from nowrap for better responsiveness */
   justify-content: center;
   align-items: flex-start;
   width: 100%;
@@ -347,8 +348,8 @@ h1 {
   padding: 0;
   gap: 0 !important;
   box-shadow: 0 0 30px rgba(0, 243, 255, 0.3);
-  width: 450px;
-  height: 450px;
+  width: 500px; /* Increased from 450px */
+  height: 500px; /* Increased from 450px */
   margin: 0 auto;
 }
 
