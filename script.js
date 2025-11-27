@@ -438,72 +438,17 @@ class SudokuGame {
     }
 
     // ===== BOTTOM NAVIGATION SYSTEM =====
-    this.setupBottomNav();
+    // this.setupBottomNav();
 
     // ===== MOBILE MODAL NUMPAD =====
-    this.setupMobileModalNumpad();
+    // this.setupMobileModalNumpad();
   }
 
+  /* 
   setupMobileModalNumpad() {
-    if (window.innerWidth > 768) return;
-
-    const modalNumpad = document.getElementById("modal-numpad");
-    const board = document.querySelector(".game-board");
-
-    if (!modalNumpad || !board) {
-      console.log("Modal numpad setup skipped - elements not found");
-      return;
-    }
-
-    console.log("Setting up mobile modal numpad");
-
-    // Wire number buttons
-    modalNumpad.querySelectorAll(".modal-num-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const value = parseInt(btn.dataset.value);
-        console.log(
-          "Number button clicked:",
-          value,
-          "Cell index:",
-          this.selectedCellIndex
-        );
-
-        if (this.selectedCell) {
-          const row = Math.floor(this.selectedCellIndex / 9);
-          const col = this.selectedCellIndex % 9;
-
-          console.log("Placing number at row:", row, "col:", col);
-
-          // Use handleCellClick which properly manages the game state
-          this.handleCellClick(row, col, value);
-
-          // Remove selected class
-          document
-            .querySelectorAll(".game-board > div")
-            .forEach((c) => c.classList.remove("selected"));
-        }
-
-        this.hideModalNumpad();
-      });
-    });
-
-    // Add tap listeners to cells - use a timeout to ensure cells exist
-    setTimeout(() => {
-      const cells = board.querySelectorAll("div");
-      console.log(`Adding tap listeners to ${cells.length} cells`);
-
-      cells.forEach((cell, index) => {
-        cell.addEventListener("click", (e) => {
-          console.log("Cell clicked:", index, "fixed:", cell.dataset.fixed);
-          if (cell.dataset.fixed === "true") return;
-
-          this.selectedCellIndex = index;
-          this.selectedCell = cell;
-          this.showModalNumpad();
-        });
-      });
-    }, 500);
+    // Mobile code removed for now
   }
+  */
 
   showModalNumpad() {
     const modal = document.getElementById("modal-numpad");
