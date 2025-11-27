@@ -863,3 +863,80 @@ h1 {
 .settings-btn:last-child {
     margin-bottom: 0;
 }
+
+/* =========================================
+   SUDOKU GRID BORDERS (Critical for Mobile)
+   ========================================= */
+.game-board {
+    background: var(--cell-bg);
+    border: 3px solid var(--primary-color);
+    border-radius: 8px;
+    padding: 0;
+    gap: 0 !important;
+    box-shadow: 0 0 30px rgba(0, 243, 255, 0.3);
+}
+
+.game-board > div {
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: var(--cell-bg);
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(1rem, 4vw, 1.5rem);
+    font-weight: 500;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 40px;
+}
+
+/* Thick borders for 3x3 blocks */
+.game-board > div:nth-child(9n+1),
+.game-board > div:nth-child(9n+2),
+.game-board > div:nth-child(9n+3) {
+    border-right: 2px solid var(--primary-color);
+}
+
+.game-board > div:nth-child(n+19):nth-child(-n+27),
+.game-board > div:nth-child(n+46):nth-child(-n+54) {
+    border-bottom: 2px solid var(--primary-color);
+}
+
+/* Right border for columns 3 and 6 */
+.game-board > div:nth-child(9n+3),
+.game-board > div:nth-child(9n+6) {
+    border-right: 3px solid var(--primary-color) !important;
+}
+
+/* Bottom border for rows 3 and 6 */
+.game-board > div:nth-child(n+19):nth-child(-n+27),
+.game-board > div:nth-child(n+46):nth-child(-n+54) {
+    border-bottom: 3px solid var(--primary-color) !important;
+}
+
+.game-board > div:hover {
+    background: var(--cell-hover);
+    transform: scale(1.05);
+}
+
+.game-board > div[data-fixed="true"] {
+    color: #fff;
+    font-weight: bold;
+}
+
+.game-board > div.selected {
+    background: rgba(0, 243, 255, 0.3) !important;
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.5);
+}
+
+.game-board > div.error {
+    background: rgba(255, 0, 0, 0.3) !important;
+    animation: shake 0.3s;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
