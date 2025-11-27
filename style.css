@@ -753,6 +753,8 @@ h1 {
    SUDOKU GRID BORDERS (Critical for Mobile)
    ========================================= */
 .game-board {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
     background: var(--cell-bg);
     border: 3px solid var(--primary-color);
     border-radius: 8px;
