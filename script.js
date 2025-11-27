@@ -1831,10 +1831,8 @@ class MediaController {
   }
 
   toggleMedia() {
-    console.log("toggleMedia called");
     const resizer = document.getElementById("resizer");
     const isHidden = this.container.classList.contains("hidden");
-    console.log("isHidden:", isHidden);
 
     if (isHidden) {
       // OPENING

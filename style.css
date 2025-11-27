@@ -616,13 +616,15 @@ h1 {
 
 .media-container {
   width: 0;
+  min-width: 0;
   background: rgba(0, 0, 0, 0.5);
   border-left: 1px solid rgba(255, 255, 255, 0.1);
-  display: flex;
+  display: flex !important; /* Always flex, control visibility with width */
   flex-direction: column;
   overflow: hidden;
   transition: width 0.3s ease;
   position: relative;
+  flex-shrink: 0; /* Don't shrink when opened */
 }
 
 .media-controls {
