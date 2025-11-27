@@ -383,43 +383,8 @@ h1 {
     }
 }
 
-/* Mobile-specific styles - Full-screen grid + modal numpad */
-@media (max-width: 768px) {
-    /* Hide desktop controls */
-    .header-controls,
-    .bottom-controls,
-    .controls {
-        display: none !important;
-    }
-
-    /* Full-screen grid ONLY on mobile */
-    .game-board {
-        width: 95vw !important;
-        height: 95vw !important;
-        max-width: 500px !important;
-        max-height: 500px !important;
-        margin: auto !important;
-    }
-
-    /* Add padding for bottom nav */
-    .container {
-        padding-bottom: calc(80px + env(safe-area-inset-bottom, 0)) !important;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
-}
-
-/* Desktop: ensure grid has proper size */
-@media (min-width: 769px) {
-    .game-board {
-        width: 450px;
-        height: 450px;
-        max-width: 450px;
-        max-height: 450px;
-        margin: 0 auto;
-    }
-}
+/* MOBILE CSS TEMPORARILY DISABLED FOR DESKTOP DEPLOYMENT */
+/* Will be re-enabled after desktop version is stable */
 
 /* =========================================Adjustments for very small screens */
 @media (max-height: 700px) and (max-width: 768px) {
