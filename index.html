@@ -64,51 +64,6 @@
     <div class="background-animation"></div>
 
     <div class="app-wrapper">
-        <!-- Mobile Menu Button (hidden on desktop) -->
-        <button id="mobile-menu-btn" class="mobile-only mobile-menu-btn">☰</button>
-
-        <!-- Mobile Menu Overlay (hidden on desktop) -->
-        <div id="mobile-menu" class="mobile-only mobile-menu hidden-mobile" style="display: none;">
-            <button id="mobile-menu-close" class="mobile-menu-close">×</button>
-            <div class="mobile-menu-content">
-                <h3>Menu</h3>
-                
-                <div class="mobile-menu-section">
-                    <label>Thème</label>
-                    <div class="theme-selector-mobile">
-                        <button class="theme-btn theme-blue active" data-theme="blue">🔵</button>
-                        <button class="theme-btn theme-pink" data-theme="pink">🌸</button>
-                        <button class="theme-btn theme-green" data-theme="green">🟢</button>
-                        <button class="theme-btn theme-gold" data-theme="gold">🟡</button>
-                    </div>
-                </div>
-
-                <div class="mobile-menu-section">
-                    <button id="sound-toggle-mobile" class="mobile-menu-item">🔊 Sons</button>
-                    <button id="profile-btn-mobile" class="mobile-menu-item">👤 Profil</button>
-                </div>
-
-                <div class="mobile-menu-section">
-                    <label>Difficulté</label>
-                    <div class="difficulty-selector-mobile">
-                        <button class="diff-btn active" data-diff="easy">Facile</button>
-                        <button class="diff-btn" data-diff="medium">Moyen</button>
-                        <button class="diff-btn" data-diff="hard">Difficile</button>
-                        <button class="diff-btn" data-diff="expert">Expert</button>
-                    </div>
-                    <button id="new-game-btn-mobile" class="mobile-menu-item primary">🎮 Nouvelle Partie</button>
-                </div>
-
-                <div class="mobile-menu-section">
-                    <button id="multitask-btn-mobile" class="mobile-menu-item">📑 Multitâche</button>
-                    <button id="stats-btn-mobile" class="mobile-menu-item">📊 Statistiques</button>
-                    <button id="saves-btn-mobile" class="mobile-menu-item">💾 Sauvegardes</button>
-                    <button id="battle-btn-mobile" class="mobile-menu-item">⚔️ Battle</button>
-                    <button id="coop-btn-mobile" class="mobile-menu-item">🧬 Fusion</button>
-                </div>
-            </div>
-        </div>
-
         <main class="container" id="game-container">
             <header>
                 <h1>SUDOKU <span class="neon-text">ZEN</span></h1>
@@ -323,6 +278,57 @@
         </div>
     </div>
 
+    <!-- Mobile Settings Modal (Full Screen) -->
+    <div id="settings-modal" class="modal hidden settings-modal">
+        <div class="modal-content settings-modal-content">
+            <button id="settings-modal-close" class="close-modal-btn">×</button>
+            <h2>⚙️ Réglages</h2>
+            
+            <div class="settings-section">
+                <label>Thème</label>
+                <div class="settings-theme-selector">
+                    <button class="theme-btn theme-blue active" data-theme="blue" title="Bleu">🔵</button>
+                    <button class="theme-btn theme-pink" data-theme="pink" title="Rose">🌸</button>
+                    <button class="theme-btn theme-green" data-theme="green" title="Vert">🟢</button>
+                    <button class="theme-btn theme-gold" data-theme="gold" title="Or">🟡</button>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <label>Profil</label>
+                <button id="settings-profile-btn" class="settings-btn">
+                    <span>👤</span>
+                    <span>Gérer les profils</span>
+                </button>
+            </div>
+
+            <div class="settings-section">
+                <label>Difficulté</label>
+                <div class="settings-difficulty-selector">
+                    <button class="diff-btn" data-diff="easy">Facile</button>
+                    <button class="diff-btn active" data-diff="medium">Moyen</button>
+                    <button class="diff-btn" data-diff="hard">Difficile</button>
+                    <button class="diff-btn" data-diff="expert">Expert</button>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <button id="settings-stats-btn" class="settings-btn">
+                    <span>📊</span>
+                    <span>Statistiques</span>
+                </button>
+                <button id="settings-saves-btn" class="settings-btn">
+                    <span>💾</span>
+                    <span>Sauvegardes</span>
+                </button>
+                <button id="settings-sound-btn" class="settings-btn">
+                    <span id="settings-sound-icon">🔊</span>
+                    <span>Son</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Battle Mode Modals -->
     <div id="battle-choice-modal" class="modal hidden">
         <div class="modal-content profile-modal-content">
@@ -407,6 +413,26 @@
 
     <script src="battle-manager.js"></script>
     <script src="script.js"></script>
+
+    <!-- Bottom Navigation Bar (Mobile Only) -->
+    <nav id="bottom-nav" class="bottom-nav">
+        <button class="nav-item active" data-tab="home">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-label">Jeu</span>
+        </button>
+        <button class="nav-item" data-tab="fusion">
+            <span class="nav-icon">🤝</span>
+            <span class="nav-label">Fusion</span>
+        </button>
+        <button class="nav-item" data-tab="battle">
+            <span class="nav-icon">⚔️</span>
+            <span class="nav-label">Battle</span>
+        </button>
+        <button class="nav-item" data-tab="settings">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-label">Réglages</span>
+        </button>
+    </nav>
 </body>
 
 </html>

@@ -437,59 +437,61 @@ class SudokuGame {
       });
     }
 
-    // ===== MOBILE MENU SYSTEM =====
-    this.setupMobileMenu();
+    // ===== BOTTOM NAVIGATION SYSTEM =====
+    this.setupBottomNav();
   }
 
-  setupMobileMenu() {
-    const mobileMenuBtn = document.getElementById("mobile-menu-btn");
-    const mobileMenu = document.getElementById("mobile-menu");
-    const mobileMenuClose = document.getElementById("mobile-menu-close");
+  setupBottomNav() {
+    const navItems = document.querySelectorAll(".nav-item");
+    const settingsModal = document.getElementById("settings-modal");
+    const settingsModalClose = document.getElementById("settings-modal-close");
 
-    // Open menu
-    if (mobileMenuBtn && mobileMenu) {
-      mobileMenuBtn.addEventListener("click", () => {
-        mobileMenu.style.display = "flex";
-        mobileMenu.classList.remove("hidden-mobile");
+    navItems.forEach((item) => {
+      item.addEventListener("click", () => {
+        const tab = item.dataset.tab;
+        this.switchTab(tab);
+
+        // Update active state
+        navItems.forEach((i) => i.classList.remove("active"));
+        item.classList.add("active");
+      });
+    });
+
+    // Settings modal close
+    if (settingsModalClose) {
+      settingsModalClose.addEventListener("click", () => {
+        settingsModal.classList.add("hidden");
       });
     }
 
-    // Close menu
-    const closeMenu = () => {
-      if (mobileMenu) {
-        mobileMenu.style.display = "none";
-        mobileMenu.classList.add("hidden-mobile");
-      }
-    };
+    // Wire Settings modal buttons to desktop counterparts
+    this.setupSettingsModalButtons();
+  }
 
-    if (mobileMenuClose) {
-      mobileMenuClose.addEventListener("click", closeMenu);
+  switchTab(tab) {
+    switch (tab) {
+      case "home":
+        // Already on home, do nothing
+        break;
+      case "fusion":
+        // Trigger coop button
+        document.getElementById("coop-btn")?.click();
+        break;
+      case "battle":
+        // Trigger battle button
+        document.getElementById("battle-btn")?.click();
+        break;
+      case "settings":
+        // Open settings modal
+        document.getElementById("settings-modal")?.classList.remove("hidden");
+        break;
     }
+  }
 
-    // Wire mobile buttons to desktop counterparts
-    const wireMobileButton = (mobileId, desktopId) => {
-      const mobileBtn = document.getElementById(mobileId);
-      const desktopBtn = document.getElementById(desktopId);
-      if (mobileBtn && desktopBtn) {
-        mobileBtn.addEventListener("click", () => {
-          desktopBtn.click();
-          closeMenu();
-        });
-      }
-    };
-
-    wireMobileButton("sound-toggle-mobile", "sound-toggle");
-    wireMobileButton("profile-btn-mobile", "profile-btn");
-    wireMobileButton("new-game-btn-mobile", "new-game-btn");
-    wireMobileButton("multitask-btn-mobile", "multitask-btn");
-    wireMobileButton("stats-btn-mobile", "stats-btn");
-    wireMobileButton("saves-btn-mobile", "saves-btn");
-    wireMobileButton("battle-btn-mobile", "battle-btn");
-    wireMobileButton("coop-btn-mobile", "coop-btn");
-
-    // Theme buttons in mobile menu
+  setupSettingsModalButtons() {
+    // Wire theme buttons
     document
-      .querySelectorAll(".theme-selector-mobile .theme-btn")
+      .querySelectorAll(".settings-theme-selector .theme-btn")
       .forEach((btn) => {
         btn.addEventListener("click", () => {
           const theme = btn.dataset.theme;
@@ -499,13 +501,12 @@ class SudokuGame {
           if (desktopThemeBtn) {
             desktopThemeBtn.click();
           }
-          closeMenu();
         });
       });
 
-    // Difficulty buttons in mobile menu
+    // Wire difficulty buttons
     document
-      .querySelectorAll(".difficulty-selector-mobile .diff-btn")
+      .querySelectorAll(".settings-difficulty-selector .diff-btn")
       .forEach((btn) => {
         btn.addEventListener("click", () => {
           const diff = btn.dataset.diff;
@@ -515,10 +516,46 @@ class SudokuGame {
           if (desktopDiffBtn) {
             desktopDiffBtn.click();
           }
-          closeMenu();
         });
       });
+
+    // Wire profile button
+    document
+      .getElementById("settings-profile-btn")
+      ?.addEventListener("click", () => {
+        document.getElementById("profile-btn")?.click();
+      });
+
+    // Wire stats button
+    document
+      .getElementById("settings-stats-btn")
+      ?.addEventListener("click", () => {
+        document.getElementById("stats-btn")?.click();
+        document.getElementById("settings-modal")?.classList.add("hidden");
+      });
+
+    // Wire saves button
+    document
+      .getElementById("settings-saves-btn")
+      ?.addEventListener("click", () => {
+        document.getElementById("saves-btn")?.click();
+        document.getElementById("settings-modal")?.classList.add("hidden");
+      });
+
+    // Wire sound button
+    document
+      .getElementById("settings-sound-btn")
+      ?.addEventListener("click", () => {
+        document.getElementById("sound-toggle")?.click();
+        // Update icon
+        const icon = document.getElementById("settings-sound-icon");
+        if (icon) {
+          icon.textContent = this.soundEnabled ? "🔊" : "🔇";
+        }
+      });
   }
+
+  setupMultitaskMode() {}
 
   handleArrowNavigation(key) {
     if (!this.selectedCell) return;
