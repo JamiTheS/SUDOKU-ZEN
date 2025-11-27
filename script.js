@@ -470,6 +470,8 @@ class SudokuGame {
 
   switchTab(tab) {
     const settingsModal = document.getElementById("settings-modal");
+    const battleModal = document.getElementById("battle-choice-modal");
+    const coopModal = document.getElementById("create-room-modal");
 
     switch (tab) {
       case "home":
@@ -479,12 +481,16 @@ class SudokuGame {
         }
         break;
       case "fusion":
-        // Trigger coop button
-        document.getElementById("coop-btn")?.click();
+        // Open coop modal directly
+        if (coopModal) {
+          coopModal.classList.remove("hidden");
+        }
         break;
       case "battle":
-        // Trigger battle button
-        document.getElementById("battle-btn")?.click();
+        // Open battle modal directly
+        if (battleModal) {
+          battleModal.classList.remove("hidden");
+        }
         break;
       case "settings":
         // Open settings modal
