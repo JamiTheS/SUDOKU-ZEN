@@ -1,508 +1,410 @@
 <!DOCTYPE html>
 <html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Neon Sudoku</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="style.css" />
-    <link rel="stylesheet" href="battle-styles.css" />
-    <link rel="manifest" href="manifest.json" />
-    <link rel="apple-touch-icon" href="icon.png" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta
-      name="apple-mobile-web-app-status-bar-style"
-      content="black-translucent"
-    />
 
-    <script>
-      if ("serviceWorker" in navigator) {
-        navigator.serviceWorker
-          .register("sw.js")
-          .then((reg) => console.log("Service Worker registered"))
-          .catch((err) => console.log("Service Worker error", err));
-      }
-    </script>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Sudoku</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="battle-styles.css">
 
     <!-- Riddle Toast -->
     <div id="riddle-toast" class="hidden">
-      <div class="riddle-content">
-        <span class="riddle-icon">🔮</span>
-        <p id="riddle-text"></p>
-      </div>
+        <div class="riddle-content">
+            <span class="riddle-icon">🔮</span>
+            <p id="riddle-text"></p>
+        </div>
     </div>
 
     <!-- Co-op HUD -->
     <div id="coop-hud" class="hidden">
-      <div class="coop-stats">
-        <div class="lives-container">
-          <span>Vies:</span>
-          <span id="coop-lives">❤️❤️❤️</span>
+        <div class="coop-stats">
+            <div class="lives-container">
+                <span>Vies:</span>
+                <span id="coop-lives">❤️❤️❤️</span>
+            </div>
+            <div class="partner-container">
+                <span id="coop-partner">En attente...</span>
+            </div>
         </div>
-        <div class="partner-container">
-          <span id="coop-partner">En attente...</span>
-        </div>
-      </div>
     </div>
 
     <!-- Firebase SDK -->
     <script type="module">
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-      import {
-        getDatabase,
-        ref,
-        set,
-        onValue,
-        update,
-        remove,
-        push,
-        onDisconnect,
-      } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getDatabase, ref, set, onValue, update, remove, push, onDisconnect } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 
-      // Firebase configuration
-      const firebaseConfig = {
-        apiKey: "AIzaSyD2Cto3ve1qZKqrF46jbTgnnrTdXlzRvYI",
-        authDomain: "sudoku-zen-40401.firebaseapp.com",
-        databaseURL:
-          "https://sudoku-zen-40401-default-rtdb.europe-west1.firebasedatabase.app",
-        projectId: "sudoku-zen-40401",
-        storageBucket: "sudoku-zen-40401.firebasestorage.app",
-        messagingSenderId: "463959922820",
-        appId: "1:463959922820:web:997d6f2a8343bbf70f8ad1",
-      };
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyD2Cto3ve1qZKqrF46jbTgnnrTdXlzRvYI",
+            authDomain: "sudoku-zen-40401.firebaseapp.com",
+            databaseURL: "https://sudoku-zen-40401-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "sudoku-zen-40401",
+            storageBucket: "sudoku-zen-40401.firebasestorage.app",
+            messagingSenderId: "463959922820",
+            appId: "1:463959922820:web:997d6f2a8343bbf70f8ad1"
+        };
 
-      // Initialize Firebase
-      const app = initializeApp(firebaseConfig);
-      window.firebaseDB = getDatabase(app);
-      window.firebaseRefs = {
-        ref,
-        set,
-        onValue,
-        update,
-        remove,
-        push,
-        onDisconnect,
-      };
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        window.firebaseDB = getDatabase(app);
+        window.firebaseRefs = { ref, set, onValue, update, remove, push, onDisconnect };
     </script>
     <script src="battle-manager.js"></script>
     <script src="coop-manager.js"></script>
     <script src="script.js"></script>
-  </head>
+</head>
 
-  <body>
+<body>
     <div class="background-animation"></div>
 
     <div class="app-wrapper">
-      <main class="container" id="game-container">
-        <header>
-          <h1>SUDOKU <span class="neon-text">ZEN</span></h1>
-          <div class="header-controls">
-            <div class="theme-selector">
-              <button
-                class="theme-btn theme-blue active"
-                data-theme="blue"
-                title="Néon Bleu"
-              ></button>
-              <button
-                class="theme-btn theme-pink"
-                data-theme="pink"
-                title="Cyber Rose"
-              ></button>
-              <button
-                class="theme-btn theme-green"
-                data-theme="green"
-                title="Matrix Vert"
-              ></button>
-              <button
-                class="theme-btn theme-gold"
-                data-theme="gold"
-                title="Sunset Or"
-              ></button>
-            </div>
-            <button id="sound-toggle" class="icon-btn" title="Sons On/Off">
-              🔊
-            </button>
-            <div class="profile-selector">
-              <button
-                id="profile-btn"
-                class="icon-btn profile-btn"
-                title="Profils"
-              >
-                👤 <span id="profile-name">Joueur 1</span> ▾
-              </button>
-              <div id="profile-dropdown" class="profile-dropdown hidden">
-                <div class="profile-dropdown-header">Profils</div>
-                <div id="profile-list" class="profile-list"></div>
-                <div class="profile-dropdown-divider"></div>
-                <button id="new-profile-btn" class="profile-dropdown-btn">
-                  ➕ Nouveau profil
-                </button>
-              </div>
-            </div>
-          </div>
-        </header>
+        <!-- Mobile Menu Button (hidden on desktop) -->
+        <button id="mobile-menu-btn" class="mobile-only mobile-menu-btn">☰</button>
 
-        <div class="status-bar">
-          <div class="timer-container">
-            <div class="timer">00:00</div>
-            <button id="pause-btn" class="icon-btn" title="Pause (P)">
-              ⏸️
-            </button>
-          </div>
-          <div class="difficulty-display">
-            Niveau: <span id="current-difficulty">Moyen</span>
-          </div>
+        <!-- Mobile Menu Overlay (hidden on desktop) -->
+        <div id="mobile-menu" class="mobile-only mobile-menu hidden-mobile">
+            <button id="mobile-menu-close" class="mobile-menu-close">×</button>
+            <div class="mobile-menu-content">
+                <h3>Menu</h3>
+                
+                <div class="mobile-menu-section">
+                    <label>Thème</label>
+                    <div class="theme-selector-mobile">
+                        <button class="theme-btn theme-blue active" data-theme="blue">🔵</button>
+                        <button class="theme-btn theme-pink" data-theme="pink">🌸</button>
+                        <button class="theme-btn theme-green" data-theme="green">🟢</button>
+                        <button class="theme-btn theme-gold" data-theme="gold">🟡</button>
+                    </div>
+                </div>
+
+                <div class="mobile-menu-section">
+                    <button id="sound-toggle-mobile" class="mobile-menu-item">🔊 Sons</button>
+                    <button id="profile-btn-mobile" class="mobile-menu-item">👤 Profil</button>
+                </div>
+
+                <div class="mobile-menu-section">
+                    <label>Difficulté</label>
+                    <div class="difficulty-selector-mobile">
+                        <button class="diff-btn active" data-diff="easy">Facile</button>
+                        <button class="diff-btn" data-diff="medium">Moyen</button>
+                        <button class="diff-btn" data-diff="hard">Difficile</button>
+                        <button class="diff-btn" data-diff="expert">Expert</button>
+                    </div>
+                    <button id="new-game-btn-mobile" class="mobile-menu-item primary">🎮 Nouvelle Partie</button>
+                </div>
+
+                <div class="mobile-menu-section">
+                    <button id="multitask-btn-mobile" class="mobile-menu-item">📑 Multitâche</button>
+                    <button id="stats-btn-mobile" class="mobile-menu-item">📊 Statistiques</button>
+                    <button id="saves-btn-mobile" class="mobile-menu-item">💾 Sauvegardes</button>
+                    <button id="battle-btn-mobile" class="mobile-menu-item">⚔️ Battle</button>
+                    <button id="coop-btn-mobile" class="mobile-menu-item">🧬 Fusion</button>
+                </div>
+            </div>
         </div>
 
-        <div class="game-area">
-          <div class="game-board" id="board"></div>
+        <main class="container" id="game-container">
+            <header>
+                <h1>SUDOKU <span class="neon-text">ZEN</span></h1>
+                <div class="header-controls">
+                    <div class="theme-selector">
+                        <button class="theme-btn theme-blue active" data-theme="blue" title="Néon Bleu"></button>
+                        <button class="theme-btn theme-pink" data-theme="pink" title="Cyber Rose"></button>
+                        <button class="theme-btn theme-green" data-theme="green" title="Matrix Vert"></button>
+                        <button class="theme-btn theme-gold" data-theme="gold" title="Sunset Or"></button>
+                    </div>
+                    <button id="sound-toggle" class="icon-btn" title="Sons On/Off">🔊</button>
+                    <div class="profile-selector">
+                        <button id="profile-btn" class="icon-btn profile-btn" title="Profils">
+                            👤 <span id="profile-name">Joueur 1</span> ▾
+                        </button>
+                        <div id="profile-dropdown" class="profile-dropdown hidden">
+                            <div class="profile-dropdown-header">Profils</div>
+                            <div id="profile-list" class="profile-list"></div>
+                            <div class="profile-dropdown-divider"></div>
+                            <button id="new-profile-btn" class="profile-dropdown-btn">➕ Nouveau profil</button>
+                        </div>
+                    </div>
+                </div>
+            </header>
 
-          <div class="controls">
-            <div class="numpad">
-              <button class="num-btn" data-num="1">1</button>
-              <button class="num-btn" data-num="2">2</button>
-              <button class="num-btn" data-num="3">3</button>
-              <button class="num-btn" data-num="4">4</button>
-              <button class="num-btn" data-num="5">5</button>
-              <button class="num-btn" data-num="6">6</button>
-              <button class="num-btn" data-num="7">7</button>
-              <button class="num-btn" data-num="8">8</button>
-              <button class="num-btn" data-num="9">9</button>
-              <button class="num-btn" data-num="9">9</button>
-              <button
-                class="action-btn"
-                id="notes-toggle"
-                title="Mode Notes (N)"
-              >
-                ✏️
-              </button>
-              <button class="action-btn" id="hint-btn" title="Indice (H)">
-                💡 <span id="hint-count">3</span>
-              </button>
-              <button class="action-btn" id="erase-btn" title="Effacer (Del)">
-                ⌫
-              </button>
+            <div class="status-bar">
+                <div class="timer-container">
+                    <div class="timer">00:00</div>
+                    <button id="pause-btn" class="icon-btn" title="Pause (P)">⏸️</button>
+                </div>
+                <div class="difficulty-display">Niveau: <span id="current-difficulty">Moyen</span></div>
             </div>
 
-            <div class="difficulty-selector">
-              <button class="diff-btn active" data-diff="easy">Facile</button>
-              <button class="diff-btn" data-diff="medium">Moyen</button>
-              <button class="diff-btn" data-diff="hard">Difficile</button>
-              <button class="diff-btn" data-diff="expert">Expert</button>
+
+            <div class="game-area">
+                <div class="game-board" id="board"></div>
+
+                <div class="controls">
+                    <div class="numpad">
+                        <button class="num-btn" data-num="1">1</button>
+                        <button class="num-btn" data-num="2">2</button>
+                        <button class="num-btn" data-num="3">3</button>
+                        <button class="num-btn" data-num="4">4</button>
+                        <button class="num-btn" data-num="5">5</button>
+                        <button class="num-btn" data-num="6">6</button>
+                        <button class="num-btn" data-num="7">7</button>
+                        <button class="num-btn" data-num="8">8</button>
+                        <button class="num-btn" data-num="9">9</button>
+                        <button class="num-btn" data-num="9">9</button>
+                        <button class="action-btn" id="notes-toggle" title="Mode Notes (N)">✏️</button>
+                        <button class="action-btn" id="hint-btn" title="Indice (H)">💡 <span
+                                id="hint-count">3</span></button>
+                        <button class="action-btn" id="erase-btn" title="Effacer (Del)">⌫</button>
+                    </div>
+
+                    <div class="difficulty-selector">
+                        <button class="diff-btn active" data-diff="easy">Facile</button>
+                        <button class="diff-btn" data-diff="medium">Moyen</button>
+                        <button class="diff-btn" data-diff="hard">Difficile</button>
+                        <button class="diff-btn" data-diff="expert">Expert</button>
+                    </div>
+
+                    <button id="new-game-btn" class="new-game-btn">Nouvelle Partie</button>
+                </div>
             </div>
 
-            <button id="new-game-btn" class="new-game-btn">
-              Nouvelle Partie
-            </button>
-          </div>
-        </div>
+            <div class="bottom-controls">
+                <button id="multitask-btn" class="action-btn">📑 Mode Multitâche</button>
+                <button id="stats-btn" class="action-btn">📊 Statistiques</button>
+                <button id="saves-btn" class="action-btn">💾 Sauvegardes</button>
+                <button id="battle-btn" class="action-btn battle-btn">⚔️ Mode Battle</button>
+                <button id="coop-btn" class="action-btn coop-btn">🧬 Mode Fusion</button>
+            </div>
+        </main>
 
-        <div class="bottom-controls">
-          <button id="multitask-btn" class="action-btn">
-            📑 Mode Multitâche
-          </button>
-          <button id="stats-btn" class="action-btn">📊 Statistiques</button>
-          <button id="saves-btn" class="action-btn">💾 Sauvegardes</button>
-          <button id="battle-btn" class="action-btn battle-btn">
-            ⚔️ Mode Battle
-          </button>
-          <button id="coop-btn" class="action-btn coop-btn">
-            🧬 Mode Fusion
-          </button>
-        </div>
-      </main>
+        <div id="resizer" class="resizer hidden"></div>
 
-      <div id="resizer" class="resizer hidden"></div>
-
-      <aside id="media-container" class="media-container hidden">
-        <div id="drag-handle" class="drag-handle hidden">⋮⋮</div>
-        <div class="media-controls">
-          <input
-            type="text"
-            id="media-url"
-            placeholder="Lien YouTube ou Twitch..."
-          />
-          <button id="load-media-btn">Charger</button>
-          <button id="detach-btn" title="Détacher/Attacher">🔓</button>
-          <button id="close-media-btn" class="close-btn">×</button>
-        </div>
-        <div class="video-wrapper">
-          <iframe
-            id="media-frame"
-            src=""
-            frameborder="0"
-            allowfullscreen
-          ></iframe>
-          <div class="placeholder-text">Collez un lien pour commencer</div>
-        </div>
-        <div id="floating-resize-handle" class="floating-resize-handle hidden">
-          ⌟
-        </div>
-      </aside>
+        <aside id="media-container" class="media-container hidden">
+            <div id="drag-handle" class="drag-handle hidden">⋮⋮</div>
+            <div class="media-controls">
+                <input type="text" id="media-url" placeholder="Lien YouTube ou Twitch...">
+                <button id="load-media-btn">Charger</button>
+                <button id="detach-btn" title="Détacher/Attacher">🔓</button>
+                <button id="close-media-btn" class="close-btn">×</button>
+            </div>
+            <div class="video-wrapper">
+                <iframe id="media-frame" src="" frameborder="0" allowfullscreen></iframe>
+                <div class="placeholder-text">Collez un lien pour commencer</div>
+            </div>
+            <div id="floating-resize-handle" class="floating-resize-handle hidden">⌟</div>
+        </aside>
     </div>
 
     <div id="modal" class="modal hidden">
-      <div class="modal-content">
-        <h2 id="modal-title">Partie Terminée!</h2>
-        <p id="modal-message">Félicitations!</p>
-        <button id="modal-close-btn">Fermer</button>
-      </div>
+        <div class="modal-content">
+            <h2 id="modal-title">Partie Terminée!</h2>
+            <p id="modal-message">Félicitations!</p>
+            <button id="modal-close-btn">Fermer</button>
+        </div>
     </div>
 
     <div id="stats-modal" class="modal hidden">
-      <div class="modal-content stats-modal-content">
-        <h2>📊 Statistiques & Records</h2>
+        <div class="modal-content stats-modal-content">
+            <h2>📊 Statistiques & Records</h2>
 
-        <div class="stats-section">
-          <h3>🏆 Records Personnels</h3>
-          <div class="records-grid">
-            <div class="record-item">
-              <span class="record-label">Facile</span>
-              <span class="record-time" id="record-easy">--:--</span>
+            <div class="stats-section">
+                <h3>🏆 Records Personnels</h3>
+                <div class="records-grid">
+                    <div class="record-item">
+                        <span class="record-label">Facile</span>
+                        <span class="record-time" id="record-easy">--:--</span>
+                    </div>
+                    <div class="record-item">
+                        <span class="record-label">Moyen</span>
+                        <span class="record-time" id="record-medium">--:--</span>
+                    </div>
+                    <div class="record-item">
+                        <span class="record-label">Difficile</span>
+                        <span class="record-time" id="record-hard">--:--</span>
+                    </div>
+                    <div class="record-item">
+                        <span class="record-label">Expert</span>
+                        <span class="record-time" id="record-expert">--:--</span>
+                    </div>
+                </div>
             </div>
-            <div class="record-item">
-              <span class="record-label">Moyen</span>
-              <span class="record-time" id="record-medium">--:--</span>
-            </div>
-            <div class="record-item">
-              <span class="record-label">Difficile</span>
-              <span class="record-time" id="record-hard">--:--</span>
-            </div>
-            <div class="record-item">
-              <span class="record-label">Expert</span>
-              <span class="record-time" id="record-expert">--:--</span>
-            </div>
-          </div>
-        </div>
 
-        <div class="stats-section">
-          <h3>📈 Statistiques Globales</h3>
-          <div class="stats-grid">
-            <div class="stat-item">
-              <div class="stat-value" id="stat-played">0</div>
-              <div class="stat-label">Parties Jouées</div>
+            <div class="stats-section">
+                <h3>📈 Statistiques Globales</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-played">0</div>
+                        <div class="stat-label">Parties Jouées</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-won">0</div>
+                        <div class="stat-label">Victoires</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-winrate">0%</div>
+                        <div class="stat-label">Taux de Réussite</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-streak">0</div>
+                        <div class="stat-label">Streak Actuel</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-best-streak">0</div>
+                        <div class="stat-label">Meilleur Streak</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="stat-avg-time">--:--</div>
+                        <div class="stat-label">Temps Moyen</div>
+                    </div>
+                </div>
             </div>
-            <div class="stat-item">
-              <div class="stat-value" id="stat-won">0</div>
-              <div class="stat-label">Victoires</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-value" id="stat-winrate">0%</div>
-              <div class="stat-label">Taux de Réussite</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-value" id="stat-streak">0</div>
-              <div class="stat-label">Streak Actuel</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-value" id="stat-best-streak">0</div>
-              <div class="stat-label">Meilleur Streak</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-value" id="stat-avg-time">--:--</div>
-              <div class="stat-label">Temps Moyen</div>
-            </div>
-          </div>
-        </div>
 
-        <div class="stats-buttons">
-          <button id="stats-close-btn" class="primary-btn">Fermer</button>
-          <button id="reset-stats-btn" class="danger-btn">Réinitialiser</button>
+            <div class="stats-buttons">
+                <button id="stats-close-btn" class="primary-btn">Fermer</button>
+                <button id="reset-stats-btn" class="danger-btn">Réinitialiser</button>
+            </div>
         </div>
-      </div>
     </div>
 
     <div id="profile-modal" class="modal hidden">
-      <div class="modal-content profile-modal-content">
-        <h2>👤 Créer un Profil</h2>
-        <p>Entrez le nom de votre profil :</p>
-        <input
-          type="text"
-          id="new-profile-input"
-          class="profile-input"
-          placeholder="Votre nom..."
-          maxlength="20"
-        />
-        <div class="modal-buttons">
-          <button id="profile-modal-close" class="secondary-btn">
-            Annuler
-          </button>
-          <button id="create-profile-btn" class="primary-btn">Créer</button>
+        <div class="modal-content profile-modal-content">
+            <h2>👤 Créer un Profil</h2>
+            <p>Entrez le nom de votre profil :</p>
+            <input type="text" id="new-profile-input" class="profile-input" placeholder="Votre nom..." maxlength="20">
+            <div class="modal-buttons">
+                <button id="profile-modal-close" class="secondary-btn">Annuler</button>
+                <button id="create-profile-btn" class="primary-btn">Créer</button>
+            </div>
         </div>
-      </div>
     </div>
 
     <div id="saves-modal" class="modal hidden">
-      <div class="modal-content stats-modal-content">
-        <h2>💾 Mes Sauvegardes</h2>
+        <div class="modal-content stats-modal-content">
+            <h2>💾 Mes Sauvegardes</h2>
 
-        <div id="saves-list" class="saves-grid">
-          <!-- Save cards will be dynamically inserted here -->
-        </div>
+            <div id="saves-list" class="saves-grid">
+                <!-- Save cards will be dynamically inserted here -->
+            </div>
 
-        <div class="saves-buttons">
-          <button id="new-save-btn" class="primary-btn">
-            ➕ Nouvelle Sauvegarde
-          </button>
-          <button id="saves-close-btn" class="secondary-btn">Fermer</button>
+            <div class="saves-buttons">
+                <button id="new-save-btn" class="primary-btn">➕ Nouvelle Sauvegarde</button>
+                <button id="saves-close-btn" class="secondary-btn">Fermer</button>
+            </div>
         </div>
-      </div>
     </div>
 
     <div id="save-name-modal" class="modal hidden">
-      <div class="modal-content profile-modal-content">
-        <h2>💾 Sauvegarder la Partie</h2>
-        <p>Entrez un nom pour cette sauvegarde :</p>
-        <input
-          type="text"
-          id="save-name-input"
-          class="profile-input"
-          placeholder="Ma partie..."
-          maxlength="30"
-        />
-        <div class="modal-buttons">
-          <button id="save-name-cancel" class="secondary-btn">Annuler</button>
-          <button id="save-name-confirm" class="primary-btn">
-            Sauvegarder
-          </button>
+        <div class="modal-content profile-modal-content">
+            <h2>💾 Sauvegarder la Partie</h2>
+            <p>Entrez un nom pour cette sauvegarde :</p>
+            <input type="text" id="save-name-input" class="profile-input" placeholder="Ma partie..." maxlength="30">
+            <div class="modal-buttons">
+                <button id="save-name-cancel" class="secondary-btn">Annuler</button>
+                <button id="save-name-confirm" class="primary-btn">Sauvegarder</button>
+            </div>
         </div>
-      </div>
     </div>
 
     <div id="confirm-modal" class="modal hidden">
-      <div class="modal-content profile-modal-content">
-        <h2>⚠️ Confirmation</h2>
-        <p id="confirm-message">Êtes-vous sûr ?</p>
-        <div class="modal-buttons">
-          <button id="confirm-cancel" class="secondary-btn">Annuler</button>
-          <button id="confirm-ok" class="danger-btn">Supprimer</button>
+        <div class="modal-content profile-modal-content">
+            <h2>⚠️ Confirmation</h2>
+            <p id="confirm-message">Êtes-vous sûr ?</p>
+            <div class="modal-buttons">
+                <button id="confirm-cancel" class="secondary-btn">Annuler</button>
+                <button id="confirm-ok" class="danger-btn">Supprimer</button>
+            </div>
         </div>
-      </div>
     </div>
 
     <!-- Battle Mode Modals -->
     <div id="battle-choice-modal" class="modal hidden">
-      <div class="modal-content profile-modal-content">
-        <h2>⚔️ Mode Battle</h2>
-        <p>Affrontez un adversaire en temps réel !</p>
-        <div class="modal-buttons">
-          <button id="create-room-choice-btn" class="primary-btn">
-            Créer un Salon
-          </button>
-          <button id="join-room-choice-btn" class="secondary-btn">
-            Rejoindre un Salon
-          </button>
+        <div class="modal-content profile-modal-content">
+            <h2>⚔️ Mode Battle</h2>
+            <p>Affrontez un adversaire en temps réel !</p>
+            <div class="modal-buttons">
+                <button id="create-room-choice-btn" class="primary-btn">Créer un Salon</button>
+                <button id="join-room-choice-btn" class="secondary-btn">Rejoindre un Salon</button>
+            </div>
+            <button id="battle-choice-close" class="close-modal-btn">✕</button>
         </div>
-        <button id="battle-choice-close" class="close-modal-btn">✕</button>
-      </div>
     </div>
 
     <div id="create-room-modal" class="modal hidden">
-      <div class="modal-content profile-modal-content">
-        <h2>🎮 Créer un Salon</h2>
-        <input
-          type="text"
-          id="battle-name-input"
-          class="profile-input"
-          placeholder="Votre pseudo..."
-          maxlength="15"
-        />
-        <div class="difficulty-selector">
-          <button class="diff-btn active" data-battle-diff="easy">
-            Facile
-          </button>
-          <button class="diff-btn" data-battle-diff="medium">Moyen</button>
-          <button class="diff-btn" data-battle-diff="hard">Difficile</button>
-          <button class="diff-btn" data-battle-diff="expert">Expert</button>
+        <div class="modal-content profile-modal-content">
+            <h2>🎮 Créer un Salon</h2>
+            <input type="text" id="battle-name-input" class="profile-input" placeholder="Votre pseudo..."
+                maxlength="15">
+            <div class="difficulty-selector">
+                <button class="diff-btn active" data-battle-diff="easy">Facile</button>
+                <button class="diff-btn" data-battle-diff="medium">Moyen</button>
+                <button class="diff-btn" data-battle-diff="hard">Difficile</button>
+                <button class="diff-btn" data-battle-diff="expert">Expert</button>
+            </div>
+            <div class="game-mode-selection">
+                <label class="mode-label">Mode de jeu :</label>
+                <div class="mode-options">
+                    <button class="mode-option-btn active" data-mode="lives" type="button">
+                        ❤️ Vies partagées (3)
+                    </button>
+                    <button class="mode-option-btn" data-mode="timer" type="button">
+                        ⏱️ Timer uniquement
+                    </button>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button id="cancel-create-room-btn" class="secondary-btn">Annuler</button>
+                <button id="confirm-create-room-btn" class="primary-btn">Créer</button>
+            </div>
         </div>
-        <div class="game-mode-selection">
-          <label class="mode-label">Mode de jeu :</label>
-          <div class="mode-options">
-            <button
-              class="mode-option-btn active"
-              data-mode="lives"
-              type="button"
-            >
-              ❤️ Vies partagées (3)
-            </button>
-            <button class="mode-option-btn" data-mode="timer" type="button">
-              ⏱️ Timer uniquement
-            </button>
-          </div>
-        </div>
-        <div class="modal-buttons">
-          <button id="cancel-create-room-btn" class="secondary-btn">
-            Annuler
-          </button>
-          <button id="confirm-create-room-btn" class="primary-btn">
-            Créer
-          </button>
-        </div>
-      </div>
     </div>
 
     <div id="join-room-modal" class="modal hidden">
-      <div class="modal-content profile-modal-content">
-        <h2>🔗 Rejoindre un Salon</h2>
-        <input
-          type="text"
-          id="join-code-input"
-          class="profile-input"
-          placeholder="Code du salon..."
-          maxlength="6"
-          style="text-transform: uppercase"
-        />
-        <input
-          type="text"
-          id="join-name-input"
-          class="profile-input"
-          placeholder="Votre pseudo..."
-          maxlength="15"
-        />
-        <div class="modal-buttons">
-          <button id="cancel-join-room-btn" class="secondary-btn">
-            Annuler
-          </button>
-          <button id="confirm-join-room-btn" class="primary-btn">
-            Rejoindre
-          </button>
+        <div class="modal-content profile-modal-content">
+            <h2>🔗 Rejoindre un Salon</h2>
+            <input type="text" id="join-code-input" class="profile-input" placeholder="Code du salon..." maxlength="6"
+                style="text-transform: uppercase;">
+            <input type="text" id="join-name-input" class="profile-input" placeholder="Votre pseudo..." maxlength="15">
+            <div class="modal-buttons">
+                <button id="cancel-join-room-btn" class="secondary-btn">Annuler</button>
+                <button id="confirm-join-room-btn" class="primary-btn">Rejoindre</button>
+            </div>
         </div>
-      </div>
     </div>
 
     <div id="waiting-room-modal" class="modal hidden">
-      <div class="modal-content profile-modal-content">
-        <h2>🕐 Salle d'Attente</h2>
-        <div class="room-code-display">
-          <div class="code-label">Code du salon :</div>
-          <div class="code-value" id="waiting-room-code">ABC123</div>
-          <button id="copy-code-btn" class="icon-btn">📋</button>
+        <div class="modal-content profile-modal-content">
+            <h2>🕐 Salle d'Attente</h2>
+            <div class="room-code-display">
+                <div class="code-label">Code du salon :</div>
+                <div class="code-value" id="waiting-room-code">ABC123</div>
+                <button id="copy-code-btn" class="icon-btn">📋</button>
+            </div>
+            <p class="waiting-message">En attente d'un adversaire...</p>
+            <button id="cancel-waiting-btn" class="danger-btn">Annuler</button>
         </div>
-        <p class="waiting-message">En attente d'un adversaire...</p>
-        <button id="cancel-waiting-btn" class="danger-btn">Annuler</button>
-      </div>
     </div>
 
     <!-- Battle HUD (overlay on game board) -->
     <div id="battle-hud" class="battle-hud hidden">
-      <div class="opponent-info">
-        <div class="opponent-name">👤 Adversaire</div>
-        <div class="opponent-progress-container">
-          <div class="progress-bar">
-            <div class="progress-fill" id="opponent-progress"></div>
-          </div>
-          <span id="opponent-progress-text">0%</span>
+        <div class="opponent-info">
+            <div class="opponent-name">👤 Adversaire</div>
+            <div class="opponent-progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="opponent-progress"></div>
+                </div>
+                <span id="opponent-progress-text">0%</span>
+            </div>
         </div>
-      </div>
-      <div id="countdown" class="countdown hidden">3</div>
+        <div id="countdown" class="countdown hidden">3</div>
     </div>
 
     <script src="battle-manager.js"></script>
     <script src="script.js"></script>
-  </body>
+</body>
+
 </html>

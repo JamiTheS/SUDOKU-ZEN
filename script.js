@@ -422,7 +422,7 @@ class SudokuGame {
         navigator.clipboard.writeText(code).then(() => {
           this.dom.copyCodeBtn.textContent = "✓";
           setTimeout(() => {
-            this.dom.copyCodeBtn.textContent = "📋";
+            this.dom.copyCodeBtn.textContent = "\ud83d\udccb";
           }, 2000);
         });
       });
@@ -436,6 +436,86 @@ class SudokuGame {
         }
       });
     }
+
+    // ===== MOBILE MENU SYSTEM =====
+    this.setupMobileMenu();
+  }
+
+  setupMobileMenu() {
+    const mobileMenuBtn = document.getElementById("mobile-menu-btn");
+    const mobileMenu = document.getElementById("mobile-menu");
+    const mobileMenuClose = document.getElementById("mobile-menu-close");
+
+    // Open menu
+    if (mobileMenuBtn && mobileMenu) {
+      mobileMenuBtn.addEventListener("click", () => {
+        mobileMenu.classList.remove("hidden-mobile");
+      });
+    }
+
+    // Close menu
+    const closeMenu = () => {
+      if (mobileMenu) {
+        mobileMenu.classList.add("hidden-mobile");
+      }
+    };
+
+    if (mobileMenuClose) {
+      mobileMenuClose.addEventListener("click", closeMenu);
+    }
+
+    // Wire mobile buttons to desktop counterparts
+    const wireMobileButton = (mobileId, desktopId) => {
+      const mobileBtn = document.getElementById(mobileId);
+      const desktopBtn = document.getElementById(desktopId);
+      if (mobileBtn && desktopBtn) {
+        mobileBtn.addEventListener("click", () => {
+          desktopBtn.click();
+          closeMenu();
+        });
+      }
+    };
+
+    wireMobileButton("sound-toggle-mobile", "sound-toggle");
+    wireMobileButton("profile-btn-mobile", "profile-btn");
+    wireMobileButton("new-game-btn-mobile", "new-game-btn");
+    wireMobileButton("multitask-btn-mobile", "multitask-btn");
+    wireMobileButton("stats-btn-mobile", "stats-btn");
+    wireMobileButton("saves-btn-mobile", "saves-btn");
+    wireMobileButton("battle-btn-mobile", "battle-btn");
+    wireMobileButton("coop-btn-mobile", "coop-btn");
+
+    // Theme buttons in mobile menu
+    document
+      .querySelectorAll(".theme-selector-mobile .theme-btn")
+      .forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const theme = btn.dataset.theme;
+          const desktopThemeBtn = document.querySelector(
+            `.header-controls .theme-btn[data-theme="${theme}"]`
+          );
+          if (desktopThemeBtn) {
+            desktopThemeBtn.click();
+          }
+          closeMenu();
+        });
+      });
+
+    // Difficulty buttons in mobile menu
+    document
+      .querySelectorAll(".difficulty-selector-mobile .diff-btn")
+      .forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const diff = btn.dataset.diff;
+          const desktopDiffBtn = document.querySelector(
+            `.controls .difficulty-selector .diff-btn[data-diff="${diff}"]`
+          );
+          if (desktopDiffBtn) {
+            desktopDiffBtn.click();
+          }
+          closeMenu();
+        });
+      });
   }
 
   handleArrowNavigation(key) {
