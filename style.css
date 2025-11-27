@@ -383,21 +383,34 @@ h1 {
     }
 }
 
-/* Mobile-specific styles - MINIMAL CHANGES ONLY */
+/* Mobile-specific styles - Full-screen grid + modal numpad */
 @media (max-width: 768px) {
-    /* Hide desktop-only elements */
+    /* Hide desktop controls */
     .header-controls,
-    .bottom-controls {
+    .bottom-controls,
+    .controls {
         display: none !important;
+    }
+
+    /* Full-screen grid */
+    .game-board {
+        width: 95vw !important;
+        height: 95vw !important;
+        max-width: 500px !important;
+        max-height: 500px !important;
+        margin: auto !important;
     }
 
     /* Add padding for bottom nav */
     .container {
         padding-bottom: calc(80px + env(safe-area-inset-bottom, 0)) !important;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
 }
 
-/* Adjustments for very small screens */
+/* =========================================Adjustments for very small screens */
 @media (max-height: 700px) and (max-width: 768px) {
     .game-board {
         max-width: min(90vw, 50vh);
@@ -826,4 +839,123 @@ h1 {
     0%, 100% { transform: translateX(0); }
     25% { transform: translateX(-5px); }
     75% { transform: translateX(5px); }
+}
+
+/* =========================================
+   MOBILE MODAL NUMPAD
+   ========================================= */
+.modal-numpad {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(180deg, rgba(15, 12, 41, 0.98) 0%, rgba(15, 12, 41, 1) 100%);
+    border-top: 2px solid var(--primary-color);
+    padding: 20px;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0));
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 2000;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.8);
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .modal-numpad {
+        display: block;
+    }
+}
+
+.modal-numpad.visible {
+    transform: translateY(0);
+}
+
+.modal-numpad-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.modal-numpad-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.modal-numpad-close {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.modal-numpad-close:active {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(0.95);
+}
+
+.modal-numpad-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.modal-num-btn {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    font-size: 1.8rem;
+    font-weight: bold;
+    padding: 20px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.modal-num-btn:active {
+    background: var(--primary-color);
+    border-color: var(--primary-glow);
+    box-shadow: 0 0 20px var(--primary-glow);
+    transform: scale(0.95);
+}
+
+.modal-numpad-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.modal-action-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    padding: 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+
+.modal-action-btn span:first-child {
+    font-size: 1.3rem;
+}
+
+.modal-action-btn:active {
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(0.98);
 }

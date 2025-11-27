@@ -439,6 +439,63 @@ class SudokuGame {
 
     // ===== BOTTOM NAVIGATION SYSTEM =====
     this.setupBottomNav();
+
+    // ===== MOBILE MODAL NUMPAD =====
+    this.setupMobileModalNumpad();
+  }
+
+  setupMobileModalNumpad() {
+    if (window.innerWidth > 768) return;
+
+    const modalNumpad = document.getElementById("modal-numpad");
+    if (!modalNumpad) return;
+
+    // Wire number buttons
+    modalNumpad.querySelectorAll(".modal-num-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const value = btn.dataset.value;
+        if (this.selectedCell) {
+          // Use existing placeNumber logic
+          const row = Math.floor(this.selectedCellIndex / 9);
+          const col = this.selectedCellIndex % 9;
+          this.placeNumber(row, col, parseInt(value));
+        }
+        this.hideModalNumpad();
+      });
+    });
+
+    // Add tap listeners to cells
+    this.board.querySelectorAll("div").forEach((cell, index) => {
+      cell.addEventListener("click", () => {
+        if (cell.dataset.fixed === "true") return;
+        this.selectedCellIndex = index;
+        this.selectedCell = cell;
+        this.showModalNumpad();
+      });
+    });
+  }
+
+  showModalNumpad() {
+    const modal = document.getElementById("modal-numpad");
+    if (modal) {
+      modal.classList.add("visible");
+    }
+  }
+
+  hideModalNumpad() {
+    const modal = document.getElementById("modal-numpad");
+    if (modal) {
+      modal.classList.remove("visible");
+    }
+  }
+
+  clearCell() {
+    if (this.selectedCell && this.selectedCell.dataset.fixed !== "true") {
+      const row = Math.floor(this.selectedCellIndex / 9);
+      const col = this.selectedCellIndex % 9;
+      this.placeNumber(row, col, 0);
+      this.hideModalNumpad();
+    }
   }
 
   setupBottomNav() {
