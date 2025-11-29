@@ -18,6 +18,7 @@ window.onerror = function (msg, url, lineNo, columnNo, error) {
 
 class SudokuGame {
   constructor() {
+    console.log("SudokuGame constructor called");
     this.board = [];
     this.solution = [];
     this.initialBoard = [];
@@ -135,6 +136,7 @@ class SudokuGame {
   }
 
   init() {
+    console.log("init called");
     try {
       this.generateBoard();
       this.setupEventListeners();
@@ -1199,6 +1201,7 @@ class SudokuGame {
   }
 
   prepareBoardForDifficulty() {
+    console.log("prepareBoardForDifficulty called");
     let attempts = 5;
     let removeCount;
 
@@ -1229,10 +1232,41 @@ class SudokuGame {
 
       let backup = this.initialBoard[cellId];
       this.initialBoard[cellId] = 0;
-      removeCount--;
-    }
 
+      // Copy board for solver
+      let boardCopy = [...this.initialBoard];
+
+      // Count solutions
+      let solutions = 0;
+      this.countSolutions(boardCopy, () => {
+        solutions++;
+      });
+
+      if (solutions !== 1) {
+        this.initialBoard[cellId] = backup;
+        attempts--; // Fix: Decrement attempts
+      } else {
+        removeCount--;
+      }
+    }
+    console.log("prepareBoardForDifficulty finished");
     this.board = [...this.initialBoard];
+  }
+
+  countSolutions(board, callback) {
+    for (let i = 0; i < 81; i++) {
+      if (board[i] === 0) {
+        for (let num = 1; num <= 9; num++) {
+          if (this.isSafe(board, Math.floor(i / 9), i % 9, num)) {
+            board[i] = num;
+            this.countSolutions(board, callback);
+            board[i] = 0;
+          }
+        }
+        return;
+      }
+    }
+    callback();
   }
 
   renderBoard() {
