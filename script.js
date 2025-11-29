@@ -1236,7 +1236,12 @@ class SudokuGame {
   }
 
   renderBoard() {
-    if (!this.dom.board) return;
+    console.log("renderBoard called");
+    if (!this.dom.board) {
+      console.error("renderBoard: this.dom.board is null");
+      return;
+    }
+    console.log("renderBoard: board length", this.board.length);
     this.dom.board.innerHTML = "";
     this.board.forEach((num, index) => {
       const cell = document.createElement("div");
@@ -1245,6 +1250,7 @@ class SudokuGame {
       this.dom.board.appendChild(cell);
       this.renderCell(index);
     });
+    console.log("renderBoard: finished adding cells");
   }
 
   selectCell(cell) {
