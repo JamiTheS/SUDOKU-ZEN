@@ -919,7 +919,6 @@ class SudokuGame {
         const seconds = (this.timer % 60).toString().padStart(2, "0");
         if (this.dom.timer)
           this.dom.timer.textContent = `${minutes}:${seconds}`;
-```
       }
     }, 1000);
   }
