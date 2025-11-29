@@ -48,8 +48,6 @@ class SudokuGame {
         playWin: () => {},
       }; // Dummy fallback
     }
-
-    this.soundManager = new SoundManager();
     this.themeManager = new ThemeManager();
     this.profileManager = new ProfileManager();
     this.statsManager = new StatsManager(this.profileManager);
@@ -463,7 +461,7 @@ class SudokuGame {
       .forEach((btn) => {
         btn.addEventListener("click", () => {
           const diff = btn.dataset.diff;
-          console.log("Difficulty button clicked:", diff);
+          // Debug: Difficulty button clicked
 
           // Update active state in settings modal
           document
@@ -487,7 +485,7 @@ class SudokuGame {
           // Close settings modal
           document.getElementById("settings-modal")?.classList.add("hidden");
 
-          console.log("New game started with difficulty:", this.difficulty);
+          // Debug: New game started with selected difficulty
         });
       });
 
@@ -2078,7 +2076,8 @@ class ProfileManager {
   }
 
   migrateOldData() {
-    console.log("Migrating old data to Joueur 1...");
+    // Migrating old data to default profile
+
     const defaultProfile = "Joueur 1";
 
     // Migrate save data
