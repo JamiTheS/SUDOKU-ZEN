@@ -919,6 +919,7 @@ class SudokuGame {
         const seconds = (this.timer % 60).toString().padStart(2, "0");
         if (this.dom.timer)
           this.dom.timer.textContent = `${minutes}:${seconds}`;
+```
       }
     }, 1000);
   }
@@ -928,6 +929,16 @@ class SudokuGame {
     if (!this.isPlaying) return;
 
     this.isPaused = !this.isPaused;
+
+    const board = document.getElementById("sudoku-board");
+    if (board) {
+      if (this.isPaused) {
+        board.classList.add("blurred");
+      } else {
+        board.classList.remove("blurred");
+      }
+    }
+
     this.updatePauseUI();
   }
 
