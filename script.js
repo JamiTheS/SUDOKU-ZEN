@@ -18,7 +18,6 @@ window.onerror = function (msg, url, lineNo, columnNo, error) {
 
 class SudokuGame {
   constructor() {
-    console.log("SudokuGame constructor called");
     this.board = [];
     this.solution = [];
     this.initialBoard = [];
@@ -136,7 +135,6 @@ class SudokuGame {
   }
 
   init() {
-    console.log("init called");
     try {
       this.generateBoard();
       this.setupEventListeners();
@@ -1201,7 +1199,6 @@ class SudokuGame {
   }
 
   prepareBoardForDifficulty() {
-    console.log("prepareBoardForDifficulty called");
     let attempts = 5;
     let removeCount;
 
@@ -1249,7 +1246,6 @@ class SudokuGame {
         removeCount--;
       }
     }
-    console.log("prepareBoardForDifficulty finished");
     this.board = [...this.initialBoard];
   }
 
@@ -1270,12 +1266,9 @@ class SudokuGame {
   }
 
   renderBoard() {
-    console.log("renderBoard called");
     if (!this.dom.board) {
-      console.error("renderBoard: this.dom.board is null");
       return;
     }
-    console.log("renderBoard: board length", this.board.length);
     this.dom.board.innerHTML = "";
     this.board.forEach((num, index) => {
       const cell = document.createElement("div");
@@ -1284,7 +1277,6 @@ class SudokuGame {
       this.dom.board.appendChild(cell);
       this.renderCell(index);
     });
-    console.log("renderBoard: finished adding cells");
   }
 
   selectCell(cell) {
