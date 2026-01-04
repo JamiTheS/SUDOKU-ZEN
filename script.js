@@ -53,9 +53,8 @@ class SudokuGame {
     this.statsManager = new StatsManager(this.profileManager);
     this.battleManager = new BattleManager(this);
     this.coopManager = new CoopManager(this);
-    this.mediaController = new MediaController();
+    // this.mediaController represents the UI Shell, which is initialized in DOMContentLoaded
 
-    // Wait for Firebase to be ready before initializing BattleManager
     // This block is now removed as managers are initialized directly.
     // setTimeout(() => {
     //     if (window.firebaseDB) {
@@ -524,8 +523,6 @@ class SudokuGame {
         }
       });
   }
-
-  setupMultitaskMode() {}
 
   handleArrowNavigation(key) {
     if (!this.selectedCell) return;
@@ -1221,7 +1218,7 @@ class SudokuGame {
 
     this.initialBoard = [...this.solution];
 
-    while (removeCount > 0 && attempts > 0) {
+    while (removeCount > 0) {
       let cellId = Math.floor(Math.random() * 81);
       while (this.initialBoard[cellId] === 0) {
         cellId = Math.floor(Math.random() * 81);
@@ -1241,7 +1238,7 @@ class SudokuGame {
 
       if (solutions !== 1) {
         this.initialBoard[cellId] = backup;
-        attempts--; // Fix: Decrement attempts
+        // Do not decrement attempts, just try another cell
       } else {
         removeCount--;
       }
