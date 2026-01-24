@@ -71,7 +71,10 @@ class BattleManager {
       return { success: true, roomCode: roomCode };
     } catch (error) {
       console.error("Error creating room:", error);
-      return { success: false, error: error.message };
+      return { 
+        success: false, 
+        error: error.message || "Erreur de connexion Firebase"
+      };
     }
   }
 
@@ -131,7 +134,10 @@ class BattleManager {
       return { success: true, roomCode: roomCode };
     } catch (error) {
       console.error("[BattleManager] Error joining room:", error);
-      return { success: false, error: error.message };
+      return { 
+        success: false, 
+        error: error.message || "Erreur de connexion Firebase"
+      };
     }
   }
 
@@ -147,6 +153,13 @@ class BattleManager {
 
       const roomData = snapshot.val();
       this.handleRoomUpdate(roomData);
+    }, (error) => {
+      console.error("Firebase listener error:", error);
+      this.game.showModal(
+        "Erreur de connexion",
+        "Connexion au serveur perdue. Veuillez réessayer."
+      );
+      this.cleanup();
     });
 
     this.roomListeners.push(unsubscribe);
@@ -242,8 +255,14 @@ class BattleManager {
     this.game.solution = roomData.solution;
     this.game.notes = new Array(81).fill(null).map(() => new Set());
     this.game.renderBoard();
+    
+    // Set flags properly
     this.game.isPlaying = true;
     this.game.battleMode = true;
+    this.game.coopMode = false;
+    this.game.currentMode = "battle";
+    
+    // Reset and start timer
     this.game.resetGameStats();
     this.game.startTimer();
 
@@ -317,7 +336,12 @@ class BattleManager {
   // Affiche l'écran de fin
   handleGameEnd(winner) {
     this.game.isPlaying = false;
-    clearInterval(this.game.timerInterval);
+    
+    // Clear timer interval properly
+    if (this.game.timerInterval) {
+      clearInterval(this.game.timerInterval);
+      this.game.timerInterval = null;
+    }
 
     const isWinner = winner === this.playerName;
     const title = isWinner ? "🏆 VICTOIRE !" : "😔 Défaite";
@@ -367,21 +391,35 @@ class BattleManager {
   async leaveRoom() {
     if (!this.currentRoom) return;
 
+    // Stop the game
+    this.game.isPlaying = false;
+    
+    // Clear timer interval
+    if (this.game.timerInterval) {
+      clearInterval(this.game.timerInterval);
+      this.game.timerInterval = null;
+    }
+
     // Nettoyer les listeners
     this.cleanup();
 
-    // Si c'est l'hôte, supprimer le salon
-    if (this.isHost) {
-      const roomRef = this.dbRefs.ref(this.db, `rooms/${this.currentRoom}`);
-      await this.dbRefs.remove(roomRef);
-    } else {
-      // Si c'est l'invité, se retirer du salon
-      const roomRef = this.dbRefs.ref(this.db, `rooms/${this.currentRoom}`);
-      await this.dbRefs.update(roomRef, {
-        guest: null,
-        status: "waiting",
-        [`players/${this.playerName}`]: null,
-      });
+    try {
+      // Si c'est l'hôte, supprimer le salon
+      if (this.isHost) {
+        const roomRef = this.dbRefs.ref(this.db, `rooms/${this.currentRoom}`);
+        await this.dbRefs.remove(roomRef);
+      } else {
+        // Si c'est l'invité, se retirer du salon
+        const roomRef = this.dbRefs.ref(this.db, `rooms/${this.currentRoom}`);
+        await this.dbRefs.update(roomRef, {
+          guest: null,
+          status: "waiting",
+          [`players/${this.playerName}`]: null,
+        });
+      }
+    } catch (error) {
+      console.error("Error leaving room:", error);
+      // Continue with cleanup even if Firebase update fails
     }
 
     this.currentRoom = null;

@@ -17,22 +17,38 @@ class CoopManager {
   }
 
   cleanup() {
-    this.roomListeners.forEach((unsubscribe) => unsubscribe());
+    // Stop the game
+    this.game.isPlaying = false;
+    
+    // Clear timer interval
+    if (this.game.timerInterval) {
+      clearInterval(this.game.timerInterval);
+      this.game.timerInterval = null;
+    }
+    
+    // Clean up listeners
+    this.roomListeners.forEach((unsubscribe) => {
+      if (typeof unsubscribe === "function") unsubscribe();
+    });
     this.roomListeners = [];
+    
+    // Reset state
     this.currentRoom = null;
     this.isHost = false;
     this.gameStarted = false;
     this.cellOwners = {};
     this.pendingMoves.clear();
     this.game.coopMode = false;
+    this.game.battleMode = false;
     this.game.currentMode = null;
+    
+    // Clean up DOM
     if (this.game.dom.board) {
       this.game.dom.board.classList.remove("coop-mode");
     }
     if (this.game.dom.coopHud) {
       this.game.dom.coopHud.classList.add("hidden");
     }
-    // Clean up DOM classes
     document.body.classList.remove("game-paused");
   }
 
@@ -93,7 +109,10 @@ class CoopManager {
       return { success: true, roomCode: roomCode };
     } catch (error) {
       console.error("Error creating coop room:", error);
-      return { success: false, error: error.message };
+      return { 
+        success: false, 
+        error: error.message || "Erreur de connexion Firebase"
+      };
     }
   }
 
@@ -109,8 +128,15 @@ class CoopManager {
       this.playerColor = "orange";
 
       const roomRef = this.dbRefs.ref(this.db, `rooms/${roomCode}`);
-      const snapshot = await new Promise((resolve) => {
-        this.dbRefs.onValue(roomRef, (snap) => resolve(snap), {
+      const snapshot = await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error("Timeout"));
+        }, 10000); // 10 second timeout
+        
+        this.dbRefs.onValue(roomRef, (snap) => {
+          clearTimeout(timeout);
+          resolve(snap);
+        }, {
           onlyOnce: true,
         });
       });
@@ -122,6 +148,8 @@ class CoopManager {
       if (roomData.mode !== "coop")
         return { success: false, error: "Ce n'est pas un salon Fusion" };
       if (roomData.guest) return { success: false, error: "Salon complet" };
+      if (roomData.status !== "waiting")
+        return { success: false, error: "Partie déjà commencée" };
 
       await this.dbRefs.update(roomRef, {
         guest: playerName,
@@ -145,7 +173,16 @@ class CoopManager {
       return { success: true, roomCode: roomCode };
     } catch (error) {
       console.error("Error joining coop room:", error);
-      return { success: false, error: error.message };
+      if (error.message === "Timeout") {
+        return { 
+          success: false, 
+          error: "Délai d'attente dépassé. Vérifiez votre connexion."
+        };
+      }
+      return { 
+        success: false, 
+        error: error.message || "Erreur de connexion Firebase"
+      };
     }
   }
 
@@ -160,6 +197,13 @@ class CoopManager {
       }
       const data = snapshot.val();
       this.handleRoomUpdate(data);
+    }, (error) => {
+      console.error("Firebase listener error:", error);
+      this.game.showModal(
+        "Erreur de connexion",
+        "Connexion au serveur perdue. Veuillez réessayer."
+      );
+      this.cleanup();
     });
     this.roomListeners.push(unsubscribe);
   }
@@ -208,6 +252,12 @@ class CoopManager {
       this.game.showModal("VICTOIRE !", "Bravo ! La fusion est complète ! 🏆");
       this.game.soundManager.playWin();
       this.game.isPlaying = false;
+      
+      // Clear timer interval
+      if (this.game.timerInterval) {
+        clearInterval(this.game.timerInterval);
+        this.game.timerInterval = null;
+      }
       
       // Hide Co-op HUD after game end
       if (this.game.dom.coopHud) {
@@ -264,9 +314,16 @@ class CoopManager {
     this.cellOwners = { ...(roomData.cellOwners || {}) }; // Initialize local cache
     this.game.notes = new Array(81).fill(null).map(() => new Set());
     this.game.renderBoard();
+    
+    // Set flags properly
     this.game.isPlaying = true;
     this.game.coopMode = true;
+    this.game.battleMode = false;
+    this.game.currentMode = "coop";
+    
     this.game.dom.board.classList.add("coop-mode"); // Add class for CSS overrides
+    
+    // Reset and start timer
     this.game.resetGameStats();
     this.game.startTimer();
 
@@ -481,6 +538,12 @@ class CoopManager {
   handleGameOver() {
     this.game.showModal("GAME OVER", "Vous avez épuisé vos vies communes ! 💀");
     this.game.isPlaying = false;
+    
+    // Clear timer interval
+    if (this.game.timerInterval) {
+      clearInterval(this.game.timerInterval);
+      this.game.timerInterval = null;
+    }
     
     // Hide Co-op HUD after game over
     if (this.game.dom.coopHud) {

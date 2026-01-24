@@ -702,6 +702,12 @@ class SudokuGame {
 
         this.renderBoard();
         this.isPlaying = true;
+        
+        // Clear any existing timer before starting new one
+        if (this.timerInterval) {
+          clearInterval(this.timerInterval);
+          this.timerInterval = null;
+        }
         this.startTimer();
 
         const diffDisplay = document.getElementById("current-difficulty");
@@ -812,7 +818,10 @@ class SudokuGame {
       this.isPlaying = true;
 
       // Clear and restart timer
-      clearInterval(this.timerInterval);
+      if (this.timerInterval) {
+        clearInterval(this.timerInterval);
+        this.timerInterval = null;
+      }
       this.startTimer();
 
       // Update difficulty display
@@ -908,17 +917,28 @@ class SudokuGame {
   resetGameStats() {
     this.mistakes = 0;
     this.timer = 0;
-    clearInterval(this.timerInterval);
+    
+    // Clear timer interval properly
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    }
+    
     if (this.dom.timer) this.dom.timer.textContent = "00:00";
   }
 
   startTimer() {
-    if (this.timerInterval) clearInterval(this.timerInterval);
+    // Always clear any existing timer first
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    }
+    
     this.isPaused = false;
     this.updatePauseUI();
 
     this.timerInterval = setInterval(() => {
-      if (!this.isPaused) {
+      if (!this.isPaused && this.isPlaying) {
         this.timer++;
         const minutes = Math.floor(this.timer / 60)
           .toString()
@@ -1336,7 +1356,12 @@ class SudokuGame {
 
   gameWon() {
     this.isPlaying = false;
-    clearInterval(this.timerInterval);
+    
+    // Clear timer interval
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    }
 
     // Battle mode: notify win
     if (this.battleMode && this.battleManager) {
@@ -1609,6 +1634,11 @@ class SudokuGame {
 
   // Battle Mode Methods
   async createBattleRoom() {
+    if (!window.firebaseDB) {
+      alert("Service multijoueur indisponible. Vérifiez votre connexion internet.");
+      return;
+    }
+    
     if (!this.battleManager && !this.coopManager) {
       alert("Managers non initialisés. Rafraîchissez la page.");
       return;
@@ -1628,33 +1658,38 @@ class SudokuGame {
     this.dom.createRoomModal.classList.add("hidden");
 
     let result;
-    if (this.currentMode === "coop") {
-      // Get selected game mode (lives or timer)
-      const selectedMode = document.querySelector(".mode-option-btn.active");
-      const gameMode = selectedMode ? selectedMode.dataset.mode : "lives";
-      result = await this.coopManager.createRoom(
-        playerName,
-        difficulty,
-        gameMode
-      );
-    } else {
-      // Default to battle mode if currentMode is not set or is 'battle'
-      result = await this.battleManager.createRoom(playerName, difficulty);
-    }
-
-    if (result.success) {
-      this.dom.waitingRoomCode.textContent = result.roomCode;
-      this.dom.waitingRoomModal.classList.remove("hidden");
-
-      // Update waiting room title for Co-op
-      const title = document.querySelector("#waiting-room-modal h2");
-      if (title && this.currentMode === "coop") {
-        title.textContent = "🧬 Salon Fusion";
-      } else if (title) {
-        title.textContent = "⚔️ Salon de Bataille";
+    try {
+      if (this.currentMode === "coop") {
+        // Get selected game mode (lives or timer)
+        const selectedMode = document.querySelector(".mode-option-btn.active");
+        const gameMode = selectedMode ? selectedMode.dataset.mode : "lives";
+        result = await this.coopManager.createRoom(
+          playerName,
+          difficulty,
+          gameMode
+        );
+      } else {
+        // Default to battle mode if currentMode is not set or is 'battle'
+        result = await this.battleManager.createRoom(playerName, difficulty);
       }
-    } else {
-      alert(result.error || "Erreur lors de la création du salon");
+
+      if (result.success) {
+        this.dom.waitingRoomCode.textContent = result.roomCode;
+        this.dom.waitingRoomModal.classList.remove("hidden");
+
+        // Update waiting room title for Co-op
+        const title = document.querySelector("#waiting-room-modal h2");
+        if (title && this.currentMode === "coop") {
+          title.textContent = "🧬 Salon Fusion";
+        } else if (title) {
+          title.textContent = "⚔️ Salon de Bataille";
+        }
+      } else {
+        alert(result.error || "Erreur lors de la création du salon");
+      }
+    } catch (error) {
+      console.error("Error creating room:", error);
+      alert("Erreur de connexion. Vérifiez votre connexion internet et réessayez.");
     }
   }
 
@@ -1665,27 +1700,50 @@ class SudokuGame {
     const roomCode = codeInput ? codeInput.value.trim().toUpperCase() : "";
     const playerName = nameInput ? nameInput.value.trim() : "";
 
-    if (!roomCode || !playerName) {
-      alert("Veuillez remplir tous les champs");
+    // Validate room code format (6 alphanumeric characters)
+    if (!roomCode) {
+      alert("Veuillez entrer un code de salon");
+      return;
+    }
+    
+    if (roomCode.length !== 6) {
+      alert("Le code du salon doit contenir 6 caractères");
+      return;
+    }
+    
+    if (!/^[A-Z0-9]{6}$/.test(roomCode)) {
+      alert("Le code du salon ne doit contenir que des lettres et des chiffres");
+      return;
+    }
+    
+    if (!playerName) {
+      alert("Veuillez entrer un pseudo");
       return;
     }
 
     // First, check the room's mode from Firebase to determine which manager to use
     if (!window.firebaseDB) {
-      alert("Service multijoueur indisponible (Firebase non chargé)");
+      alert("Service multijoueur indisponible. Vérifiez votre connexion internet.");
       return;
     }
 
     try {
       const roomRef = window.firebaseRefs.ref(window.firebaseDB, `rooms/${roomCode}`);
-      const snapshot = await new Promise((resolve) => {
-        window.firebaseRefs.onValue(roomRef, (snap) => resolve(snap), {
+      const snapshot = await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error("Timeout"));
+        }, 10000); // 10 second timeout
+        
+        window.firebaseRefs.onValue(roomRef, (snap) => {
+          clearTimeout(timeout);
+          resolve(snap);
+        }, {
           onlyOnce: true,
         });
       });
 
       if (!snapshot.exists()) {
-        alert("Salon introuvable");
+        alert("Salon introuvable. Vérifiez le code.");
         return;
       }
 
@@ -1709,13 +1767,19 @@ class SudokuGame {
           this.dom.coopHud.classList.remove("hidden");
           // Start playing immediately for Co-op
           this.isPlaying = true;
+        } else {
+          this.battleMode = true;
         }
       } else {
         alert(result.error);
       }
     } catch (error) {
       console.error("Error checking room mode:", error);
-      alert("Erreur lors de la connexion au salon");
+      if (error.message === "Timeout") {
+        alert("Délai d'attente dépassé. Vérifiez votre connexion internet.");
+      } else {
+        alert("Erreur de connexion. Vérifiez votre connexion internet et réessayez.");
+      }
     }
   }
 
@@ -1782,6 +1846,14 @@ class SudokuGame {
 
   // Clean up multiplayer modes and HUDs
   cleanupMultiplayerModes() {
+    // Clean up managers first
+    if (this.battleMode && this.battleManager) {
+      this.battleManager.cleanup();
+    }
+    if (this.coopMode && this.coopManager) {
+      this.coopManager.cleanup();
+    }
+    
     // Reset mode flags
     this.battleMode = false;
     this.coopMode = false;
