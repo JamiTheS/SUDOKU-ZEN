@@ -190,6 +190,11 @@ class BattleManager {
       if (modal) modal.classList.add("hidden");
     });
 
+    // Ensure Co-op HUD is hidden in battle mode
+    if (this.game.dom.coopHud) {
+      this.game.dom.coopHud.classList.add("hidden");
+    }
+
     const countdownEl = document.getElementById("countdown");
     const battleHud = document.getElementById("battle-hud");
 
@@ -325,6 +330,14 @@ class BattleManager {
     if (isWinner) {
       this.game.soundManager.playWin();
     }
+
+    // Hide Battle HUD after game end
+    const battleHud = document.getElementById("battle-hud");
+    if (battleHud) battleHud.classList.add("hidden");
+
+    // Clean up battle mode state
+    this.game.battleMode = false;
+    this.game.currentMode = null;
   }
 
   // Gère la fermeture du salon
@@ -380,6 +393,12 @@ class BattleManager {
     // Cacher le HUD battle
     const battleHud = document.getElementById("battle-hud");
     if (battleHud) battleHud.classList.add("hidden");
+
+    // Clean up DOM classes
+    if (this.game.dom.board) {
+      this.game.dom.board.classList.remove("coop-mode");
+    }
+    document.body.classList.remove("game-paused");
   }
 
   // Nettoie les listeners

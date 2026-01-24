@@ -682,3 +682,147 @@ iframe {
   height: 100%;
   border: none;
 }
+
+/* Co-op HUD Styles */
+#coop-hud {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  background: rgba(15, 12, 41, 0.95);
+  backdrop-filter: blur(20px);
+  border: 2px solid var(--primary-color);
+  border-radius: 15px;
+  padding: 1.5rem;
+  z-index: 50;
+  min-width: 280px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+#coop-hud.hidden {
+  display: none;
+}
+
+.coop-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.lives-container, .partner-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1rem;
+  color: #fff;
+}
+
+#coop-lives {
+  font-size: 1.2rem;
+  letter-spacing: 2px;
+}
+
+.partner-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.partner-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.partner-dot.online {
+  background: #00ff00;
+  box-shadow: 0 0 10px #00ff00;
+  animation: pulse 2s ease infinite;
+}
+
+.partner-dot.offline {
+  background: #666;
+}
+
+/* Riddle Toast Styles */
+#riddle-toast {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(15, 12, 41, 0.98);
+  backdrop-filter: blur(20px);
+  border: 2px solid var(--primary-color);
+  border-radius: 15px;
+  padding: 2rem 3rem;
+  z-index: 1000;
+  max-width: 500px;
+  box-shadow: 0 10px 60px rgba(0, 0, 0, 0.9),
+              0 0 30px var(--primary-color);
+  animation: fadeInScale 0.5s ease;
+}
+
+#riddle-toast.hidden {
+  display: none;
+}
+
+.riddle-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  text-align: center;
+}
+
+.riddle-icon {
+  font-size: 3rem;
+  animation: float 3s ease-in-out infinite;
+}
+
+#riddle-text {
+  font-size: 1.3rem;
+  color: var(--primary-color);
+  font-style: italic;
+  line-height: 1.6;
+  text-shadow: 0 0 10px var(--primary-color);
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Responsive adjustments for Co-op HUD */
+@media (max-width: 768px) {
+  #coop-hud {
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    min-width: auto;
+    padding: 1rem;
+  }
+  
+  #riddle-toast {
+    padding: 1.5rem 2rem;
+    max-width: 90%;
+  }
+  
+  #riddle-text {
+    font-size: 1.1rem;
+  }
+}

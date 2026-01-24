@@ -32,6 +32,8 @@ class CoopManager {
     if (this.game.dom.coopHud) {
       this.game.dom.coopHud.classList.add("hidden");
     }
+    // Clean up DOM classes
+    document.body.classList.remove("game-paused");
   }
 
   generateRoomCode() {
@@ -206,6 +208,18 @@ class CoopManager {
       this.game.showModal("VICTOIRE !", "Bravo ! La fusion est complète ! 🏆");
       this.game.soundManager.playWin();
       this.game.isPlaying = false;
+      
+      // Hide Co-op HUD after game end
+      if (this.game.dom.coopHud) {
+        this.game.dom.coopHud.classList.add("hidden");
+      }
+      
+      // Clean up co-op mode state
+      this.game.coopMode = false;
+      this.game.currentMode = null;
+      if (this.game.dom.board) {
+        this.game.dom.board.classList.remove("coop-mode");
+      }
     }
   }
 
@@ -222,6 +236,12 @@ class CoopManager {
       const modal = document.getElementById(id);
       if (modal) modal.classList.add("hidden");
     });
+
+    // Ensure Battle HUD is hidden in co-op mode
+    const battleHud = document.getElementById("battle-hud");
+    if (battleHud) {
+      battleHud.classList.add("hidden");
+    }
 
     // Show Co-op HUD
     if (this.game.dom.coopHud) {
@@ -461,6 +481,18 @@ class CoopManager {
   handleGameOver() {
     this.game.showModal("GAME OVER", "Vous avez épuisé vos vies communes ! 💀");
     this.game.isPlaying = false;
+    
+    // Hide Co-op HUD after game over
+    if (this.game.dom.coopHud) {
+      this.game.dom.coopHud.classList.add("hidden");
+    }
+    
+    // Clean up co-op mode state
+    this.game.coopMode = false;
+    this.game.currentMode = null;
+    if (this.game.dom.board) {
+      this.game.dom.board.classList.remove("coop-mode");
+    }
   }
 
   showErrorFeedback(index) {

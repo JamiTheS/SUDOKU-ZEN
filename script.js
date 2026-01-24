@@ -671,6 +671,9 @@ class SudokuGame {
   }
 
   loadGame() {
+    // Clean up any active multiplayer modes first
+    this.cleanupMultiplayerModes();
+
     const saved = localStorage.getItem("sudoku-save");
     if (saved) {
       try {
@@ -785,6 +788,9 @@ class SudokuGame {
     }
 
     try {
+      // Clean up any active multiplayer modes first
+      this.cleanupMultiplayerModes();
+
       // Validate slot structure
       if (
         !slot.board ||
@@ -877,6 +883,9 @@ class SudokuGame {
   }
 
   startNewGame() {
+    // Clean up any active multiplayer modes
+    this.cleanupMultiplayerModes();
+
     this.generateBoard();
     this.prepareBoardForDifficulty();
     this.notes = new Array(81).fill(null).map(() => new Set());
@@ -1335,6 +1344,12 @@ class SudokuGame {
       return; // BattleManager will show the result
     }
 
+    // Co-op mode: handle via CoopManager
+    if (this.coopMode) {
+      // CoopManager handles win display
+      return;
+    }
+
     // Record the win and check for new record
     const isNewRecord = this.statsManager.recordGameEnd(
       this.difficulty,
@@ -1763,6 +1778,33 @@ class SudokuGame {
     } else {
       alert(result.error);
     }
+  }
+
+  // Clean up multiplayer modes and HUDs
+  cleanupMultiplayerModes() {
+    // Reset mode flags
+    this.battleMode = false;
+    this.coopMode = false;
+    this.currentMode = null;
+
+    // Hide HUDs
+    if (this.dom.coopHud) {
+      this.dom.coopHud.classList.add("hidden");
+    }
+    const battleHud = document.getElementById("battle-hud");
+    if (battleHud) {
+      battleHud.classList.add("hidden");
+    }
+
+    // Clean up DOM classes
+    if (this.dom.board) {
+      this.dom.board.classList.remove("coop-mode");
+    }
+    document.body.classList.remove("game-paused");
+
+    // Update UI elements visibility
+    this.updatePauseUI();
+    this.updateHintUI();
   }
 }
 
