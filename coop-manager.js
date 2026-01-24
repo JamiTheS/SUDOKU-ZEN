@@ -25,6 +25,7 @@ class CoopManager {
     this.cellOwners = {};
     this.pendingMoves.clear();
     this.game.coopMode = false;
+    this.game.currentMode = null;
     if (this.game.dom.board) {
       this.game.dom.board.classList.remove("coop-mode");
     }

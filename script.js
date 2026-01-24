@@ -28,6 +28,7 @@ class SudokuGame {
     this.difficulty = "medium";
     this.battleMode = false;
     this.coopMode = false;
+    this.currentMode = null;
     this.solution = null;
     this.initial = null;
     this.isPaused = false;
@@ -1622,6 +1623,7 @@ class SudokuGame {
         gameMode
       );
     } else {
+      // Default to battle mode if currentMode is not set or is 'battle'
       result = await this.battleManager.createRoom(playerName, difficulty);
     }
 
@@ -1653,27 +1655,52 @@ class SudokuGame {
       return;
     }
 
-    let result;
-    // Try to join as Co-op first, then try Battle (for flexibility)
-    // Actually, we should check if currentMode is set. If the user clicked "Join" from the choice modal,
-    // we don't know if it's Battle or Co-op. Let's try to detect from room or assume Battle by default.
-    // For simplicity, we'll use currentMode if set, otherwise default to Battle.
-    if (this.currentMode === "coop") {
-      result = await this.coopManager.joinRoom(roomCode, playerName);
-    } else {
-      result = await this.battleManager.joinRoom(roomCode, playerName);
+    // First, check the room's mode from Firebase to determine which manager to use
+    if (!window.firebaseDB) {
+      alert("Service multijoueur indisponible (Firebase non chargé)");
+      return;
     }
 
-    if (result.success) {
-      this.dom.joinRoomModal.classList.add("hidden");
-      if (this.currentMode === "coop") {
-        this.coopMode = true;
-        this.dom.coopHud.classList.remove("hidden");
-        // Start playing immediately for Co-op
-        this.isPlaying = true;
+    try {
+      const roomRef = window.firebaseRefs.ref(window.firebaseDB, `rooms/${roomCode}`);
+      const snapshot = await new Promise((resolve) => {
+        window.firebaseRefs.onValue(roomRef, (snap) => resolve(snap), {
+          onlyOnce: true,
+        });
+      });
+
+      if (!snapshot.exists()) {
+        alert("Salon introuvable");
+        return;
       }
-    } else {
-      alert(result.error);
+
+      const roomData = snapshot.val();
+      const roomMode = roomData.mode || "battle"; // Default to battle for backward compatibility
+
+      // Update currentMode based on room data
+      this.currentMode = roomMode;
+
+      let result;
+      if (roomMode === "coop") {
+        result = await this.coopManager.joinRoom(roomCode, playerName);
+      } else {
+        result = await this.battleManager.joinRoom(roomCode, playerName);
+      }
+
+      if (result.success) {
+        this.dom.joinRoomModal.classList.add("hidden");
+        if (roomMode === "coop") {
+          this.coopMode = true;
+          this.dom.coopHud.classList.remove("hidden");
+          // Start playing immediately for Co-op
+          this.isPlaying = true;
+        }
+      } else {
+        alert(result.error);
+      }
+    } catch (error) {
+      console.error("Error checking room mode:", error);
+      alert("Erreur lors de la connexion au salon");
     }
   }
 

@@ -38,6 +38,7 @@ class BattleManager {
       this.game.prepareBoardForDifficulty();
 
       const roomData = {
+        mode: "battle",
         roomCode: roomCode,
         host: playerName,
         guest: null,
@@ -374,6 +375,7 @@ class BattleManager {
     this.playerName = null;
     this.isHost = false;
     this.game.battleMode = false;
+    this.game.currentMode = null;
 
     // Cacher le HUD battle
     const battleHud = document.getElementById("battle-hud");
