@@ -1634,8 +1634,12 @@ class SudokuGame {
 
   // Battle Mode Methods
   async createBattleRoom() {
+    const monitor = window.firebaseMonitor;
+    
     if (!window.firebaseDB) {
-      alert("Service multijoueur indisponible. Vérifiez votre connexion internet.");
+      const errorMsg = "Service multijoueur indisponible. Vérifiez votre connexion internet.";
+      if (monitor) monitor.showDisconnected(errorMsg);
+      alert(errorMsg);
       return;
     }
     
@@ -1647,6 +1651,16 @@ class SudokuGame {
     const playerName = this.dom.battleNameInput.value.trim();
     if (!playerName) {
       alert("Veuillez entrer un pseudo");
+      return;
+    }
+
+    if (playerName.length < 2) {
+      alert("Le pseudo doit contenir au moins 2 caractères");
+      return;
+    }
+
+    if (playerName.length > 15) {
+      alert("Le pseudo ne doit pas dépasser 15 caractères");
       return;
     }
 
@@ -1686,14 +1700,21 @@ class SudokuGame {
         }
       } else {
         alert(result.error || "Erreur lors de la création du salon");
+        // Re-show create room modal to allow retry
+        this.dom.createRoomModal.classList.remove("hidden");
       }
     } catch (error) {
       console.error("Error creating room:", error);
-      alert("Erreur de connexion. Vérifiez votre connexion internet et réessayez.");
+      const errorMsg = monitor ? monitor.getErrorMessage(error) : "Erreur de connexion";
+      if (monitor) monitor.showDisconnected(errorMsg);
+      alert(errorMsg + ". Vérifiez votre connexion internet et réessayez.");
+      // Re-show create room modal to allow retry
+      this.dom.createRoomModal.classList.remove("hidden");
     }
   }
 
   async joinBattleRoom() {
+    const monitor = window.firebaseMonitor;
     const codeInput = document.getElementById("join-code-input");
     const nameInput = document.getElementById("join-name-input");
 
@@ -1721,37 +1742,59 @@ class SudokuGame {
       return;
     }
 
+    if (playerName.length < 2) {
+      alert("Le pseudo doit contenir au moins 2 caractères");
+      return;
+    }
+
+    if (playerName.length > 15) {
+      alert("Le pseudo ne doit pas dépasser 15 caractères");
+      return;
+    }
+
     // First, check the room's mode from Firebase to determine which manager to use
     if (!window.firebaseDB) {
-      alert("Service multijoueur indisponible. Vérifiez votre connexion internet.");
+      const errorMsg = "Service multijoueur indisponible. Vérifiez votre connexion internet.";
+      if (monitor) monitor.showDisconnected(errorMsg);
+      alert(errorMsg);
       return;
     }
 
     try {
+      if (monitor) monitor.showLoading("Vérification du salon...");
+      
       const roomRef = window.firebaseRefs.ref(window.firebaseDB, `rooms/${roomCode}`);
-      const snapshot = await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          reject(new Error("Timeout"));
-        }, 10000); // 10 second timeout
-        
-        window.firebaseRefs.onValue(roomRef, (snap) => {
-          clearTimeout(timeout);
-          resolve(snap);
-        }, {
-          onlyOnce: true,
-        });
-      });
+      const snapshot = await Promise.race([
+        new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            reject(new Error("Timeout"));
+          }, 10000);
+          
+          window.firebaseRefs.onValue(roomRef, (snap) => {
+            clearTimeout(timeout);
+            resolve(snap);
+          }, {
+            onlyOnce: true,
+          });
+        }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout')), 10000)
+        )
+      ]);
 
       if (!snapshot.exists()) {
+        if (monitor) monitor.hideLoading();
         alert("Salon introuvable. Vérifiez le code.");
         return;
       }
 
       const roomData = snapshot.val();
-      const roomMode = roomData.mode || "battle"; // Default to battle for backward compatibility
+      const roomMode = roomData.mode || "battle";
 
       // Update currentMode based on room data
       this.currentMode = roomMode;
+
+      if (monitor) monitor.hideLoading();
 
       let result;
       if (roomMode === "coop") {
@@ -1765,7 +1808,6 @@ class SudokuGame {
         if (roomMode === "coop") {
           this.coopMode = true;
           this.dom.coopHud.classList.remove("hidden");
-          // Start playing immediately for Co-op
           this.isPlaying = true;
         } else {
           this.battleMode = true;
@@ -1775,11 +1817,13 @@ class SudokuGame {
       }
     } catch (error) {
       console.error("Error checking room mode:", error);
-      if (error.message === "Timeout") {
-        alert("Délai d'attente dépassé. Vérifiez votre connexion internet.");
-      } else {
-        alert("Erreur de connexion. Vérifiez votre connexion internet et réessayez.");
-      }
+      if (monitor) monitor.hideLoading();
+      
+      const errorMsg = monitor ? monitor.getErrorMessage(error) : 
+        (error.message === "Timeout" ? "Délai d'attente dépassé" : "Erreur de connexion");
+      
+      if (monitor) monitor.showDisconnected(errorMsg);
+      alert(errorMsg + ". Vérifiez votre connexion internet et réessayez.");
     }
   }
 

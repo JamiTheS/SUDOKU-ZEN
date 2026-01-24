@@ -62,11 +62,29 @@ class CoopManager {
   }
 
   async createRoom(playerName, difficulty, gameMode = "lives") {
-    if (!this.db)
+    const monitor = window.firebaseMonitor;
+    
+    // Check Firebase availability
+    if (!this.db) {
+      const errorMsg = "Service multijoueur indisponible";
+      if (monitor) monitor.showDisconnected(errorMsg);
       return {
         success: false,
-        error: "Service multijoueur indisponible (Firebase non chargé)",
+        error: errorMsg + ". Vérifiez votre connexion internet.",
       };
+    }
+
+    // Check connection status
+    if (monitor && !monitor.isConnected()) {
+      return {
+        success: false,
+        error: "Pas de connexion au serveur. Vérifiez votre connexion internet.",
+      };
+    }
+
+    // Show loading
+    if (monitor) monitor.showLoading("Création du salon Fusion...");
+
     try {
       const roomCode = this.generateRoomCode();
       this.playerName = playerName;
@@ -87,11 +105,11 @@ class CoopManager {
         livesEnabled: gameMode === "lives",
         status: "waiting",
         createdAt: Date.now(),
-        board: this.game.initialBoard, // Initial fixed numbers
-        currentBoard: [...this.game.board], // Live board state
+        board: this.game.initialBoard,
+        currentBoard: [...this.game.board],
         solution: this.game.solution,
         mistakes: 0,
-        cellOwners: {}, // { index: 'p1' | 'p2' }
+        cellOwners: {},
         players: {
           p1: { name: playerName, color: "blue", connected: true },
           p2: null,
@@ -99,63 +117,131 @@ class CoopManager {
       };
 
       const roomRef = this.dbRefs.ref(this.db, `rooms/${roomCode}`);
-      await this.dbRefs.set(roomRef, roomData);
+      
+      await Promise.race([
+        this.dbRefs.set(roomRef, roomData),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout')), 10000)
+        )
+      ]);
 
       this.currentRoom = roomCode;
-      this.cellOwners = {}; // Initialize local cache
+      this.cellOwners = {};
       this.setupRoomListeners(roomCode);
       this.setupPresence(roomCode, "p1");
 
+      if (monitor) monitor.hideLoading();
       return { success: true, roomCode: roomCode };
     } catch (error) {
       console.error("Error creating coop room:", error);
+      if (monitor) {
+        monitor.hideLoading();
+        const errorMsg = monitor.getErrorMessage(error);
+        monitor.showDisconnected(errorMsg);
+      }
+      
+      // Retry logic
+      if (error.message === 'Timeout' && monitor && monitor.retryAttempts < monitor.maxRetries) {
+        try {
+          return await monitor.retryConnection(
+            () => this.createRoom(playerName, difficulty, gameMode),
+            'Création du salon Fusion'
+          );
+        } catch (retryError) {
+          return {
+            success: false,
+            error: monitor.getErrorMessage(retryError),
+          };
+        }
+      }
+      
       return { 
         success: false, 
-        error: error.message || "Erreur de connexion Firebase"
+        error: monitor ? monitor.getErrorMessage(error) : (error.message || "Erreur de connexion")
       };
     }
   }
 
   async joinRoom(roomCode, playerName) {
-    if (!this.db)
+    const monitor = window.firebaseMonitor;
+    
+    // Check Firebase availability
+    if (!this.db) {
+      const errorMsg = "Service multijoueur indisponible";
+      if (monitor) monitor.showDisconnected(errorMsg);
       return {
         success: false,
-        error: "Service multijoueur indisponible (Firebase non chargé)",
+        error: errorMsg + ". Vérifiez votre connexion internet.",
       };
+    }
+
+    // Check connection status
+    if (monitor && !monitor.isConnected()) {
+      return {
+        success: false,
+        error: "Pas de connexion au serveur. Vérifiez votre connexion internet.",
+      };
+    }
+
+    // Show loading
+    if (monitor) monitor.showLoading("Connexion au salon Fusion...");
+
     try {
       this.playerName = playerName;
       this.isHost = false;
       this.playerColor = "orange";
 
       const roomRef = this.dbRefs.ref(this.db, `rooms/${roomCode}`);
-      const snapshot = await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          reject(new Error("Timeout"));
-        }, 10000); // 10 second timeout
-        
-        this.dbRefs.onValue(roomRef, (snap) => {
-          clearTimeout(timeout);
-          resolve(snap);
-        }, {
-          onlyOnce: true,
-        });
-      });
+      const snapshot = await Promise.race([
+        new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            reject(new Error("Timeout"));
+          }, 10000);
+          
+          this.dbRefs.onValue(roomRef, (snap) => {
+            clearTimeout(timeout);
+            resolve(snap);
+          }, {
+            onlyOnce: true,
+          });
+        }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout')), 10000)
+        )
+      ]);
 
-      if (!snapshot.exists())
-        return { success: false, error: "Salon introuvable" };
+      if (!snapshot.exists()) {
+        if (monitor) monitor.hideLoading();
+        return { success: false, error: "Salon introuvable. Vérifiez le code." };
+      }
+      
       const roomData = snapshot.val();
 
-      if (roomData.mode !== "coop")
-        return { success: false, error: "Ce n'est pas un salon Fusion" };
-      if (roomData.guest) return { success: false, error: "Salon complet" };
-      if (roomData.status !== "waiting")
-        return { success: false, error: "Partie déjà commencée" };
+      if (roomData.mode !== "coop") {
+        if (monitor) monitor.hideLoading();
+        return { success: false, error: "Ce salon n'est pas en mode Fusion." };
+      }
+      
+      if (roomData.guest) {
+        if (monitor) monitor.hideLoading();
+        return { success: false, error: "Salon complet (2/2 joueurs)." };
+      }
+      
+      if (roomData.status !== "waiting") {
+        if (monitor) monitor.hideLoading();
+        return { success: false, error: "La partie a déjà commencé." };
+      }
 
-      await this.dbRefs.update(roomRef, {
-        guest: playerName,
-        status: "starting",
-        "players/p2": { name: playerName, color: "orange", connected: true },
-      });
+      await Promise.race([
+        this.dbRefs.update(roomRef, {
+          guest: playerName,
+          status: "starting",
+          "players/p2": { name: playerName, color: "orange", connected: true },
+        }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout')), 10000)
+        )
+      ]);
 
       this.currentRoom = roomCode;
 
@@ -164,44 +250,70 @@ class CoopManager {
       this.game.initialBoard = roomData.board;
       this.game.solution = roomData.solution;
       this.game.board = [...roomData.currentBoard];
-      this.cellOwners = { ...(roomData.cellOwners || {}) }; // Initialize local cache
+      this.cellOwners = { ...(roomData.cellOwners || {}) };
       this.game.renderBoard();
 
       this.setupRoomListeners(roomCode);
       this.setupPresence(roomCode, "p2");
 
+      if (monitor) monitor.hideLoading();
       return { success: true, roomCode: roomCode };
     } catch (error) {
       console.error("Error joining coop room:", error);
-      if (error.message === "Timeout") {
-        return { 
-          success: false, 
-          error: "Délai d'attente dépassé. Vérifiez votre connexion."
-        };
+      if (monitor) {
+        monitor.hideLoading();
+        const errorMsg = monitor.getErrorMessage(error);
+        monitor.showDisconnected(errorMsg);
       }
+      
+      // Retry logic
+      if (error.message === 'Timeout' && monitor && monitor.retryAttempts < monitor.maxRetries) {
+        try {
+          return await monitor.retryConnection(
+            () => this.joinRoom(roomCode, playerName),
+            'Connexion au salon Fusion'
+          );
+        } catch (retryError) {
+          return {
+            success: false,
+            error: monitor.getErrorMessage(retryError),
+          };
+        }
+      }
+      
       return { 
         success: false, 
-        error: error.message || "Erreur de connexion Firebase"
+        error: monitor ? monitor.getErrorMessage(error) : (error.message || "Erreur de connexion")
       };
     }
   }
 
   setupRoomListeners(roomCode) {
     const roomRef = this.dbRefs.ref(this.db, `rooms/${roomCode}`);
+    const monitor = window.firebaseMonitor;
 
     const unsubscribe = this.dbRefs.onValue(roomRef, (snapshot) => {
       if (!snapshot.exists()) {
         this.cleanup();
-        this.game.showModal("Salon fermé", "Le salon a été fermé.");
+        this.game.showModal(
+          "Salon fermé", 
+          "Le salon a été fermé par l'hôte ou en raison d'une déconnexion."
+        );
         return;
       }
       const data = snapshot.val();
       this.handleRoomUpdate(data);
     }, (error) => {
       console.error("Firebase listener error:", error);
+      const errorMsg = monitor ? monitor.getErrorMessage(error) : "Connexion au serveur perdue";
+      
+      if (monitor) {
+        monitor.showDisconnected(errorMsg);
+      }
+      
       this.game.showModal(
         "Erreur de connexion",
-        "Connexion au serveur perdue. Veuillez réessayer."
+        errorMsg + ". La partie a été interrompue."
       );
       this.cleanup();
     });
@@ -420,6 +532,7 @@ class CoopManager {
 
     const playerKey = this.isHost ? "p1" : "p2";
     const roomRef = this.dbRefs.ref(this.db, `rooms/${this.currentRoom}`);
+    const monitor = window.firebaseMonitor;
 
     // Mark this cell as pending to prevent conflicts
     this.pendingMoves.add(index);
@@ -434,9 +547,16 @@ class CoopManager {
       ) {
         // Mistake in Lives mode!
         this.showErrorFeedback(index);
-        await this.dbRefs.update(roomRef, {
-          mistakes: this.mistakes + 1,
-        });
+        
+        await Promise.race([
+          this.dbRefs.update(roomRef, {
+            mistakes: this.mistakes + 1,
+          }),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout')), 5000)
+          )
+        ]);
+        
         this.pendingMoves.delete(index);
         return false;
       }
@@ -462,8 +582,13 @@ class CoopManager {
         updates[`cellOwners/${index}`] = null;
       }
 
-      // Send to Firebase
-      await this.dbRefs.update(roomRef, updates);
+      // Send to Firebase with timeout
+      await Promise.race([
+        this.dbRefs.update(roomRef, updates),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout')), 5000)
+        )
+      ]);
 
       // Clear pending state
       this.pendingMoves.delete(index);
@@ -476,20 +601,38 @@ class CoopManager {
       return true;
     } catch (error) {
       console.error("Error making move:", error);
+      
+      if (monitor) {
+        const errorMsg = monitor.getErrorMessage(error);
+        monitor.showDisconnected(errorMsg);
+      }
+      
       // Revert optimistic update on error
       this.pendingMoves.delete(index);
-      // Fetch current state from Firebase to resync
-      const snapshot = await new Promise((resolve) => {
-        this.dbRefs.onValue(roomRef, (snap) => resolve(snap), {
-          onlyOnce: true,
-        });
-      });
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        this.game.board = [...data.currentBoard];
-        this.cellOwners = { ...(data.cellOwners || {}) };
-        this.updateBoardUI(this.game.board, this.cellOwners);
+      
+      // Try to resync
+      try {
+        const snapshot = await Promise.race([
+          new Promise((resolve) => {
+            this.dbRefs.onValue(roomRef, (snap) => resolve(snap), {
+              onlyOnce: true,
+            });
+          }),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout')), 5000)
+          )
+        ]);
+        
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          this.game.board = [...data.currentBoard];
+          this.cellOwners = { ...(data.cellOwners || {}) };
+          this.updateBoardUI(this.game.board, this.cellOwners);
+        }
+      } catch (resyncError) {
+        console.error("Failed to resync:", resyncError);
       }
+      
       return false;
     }
   }

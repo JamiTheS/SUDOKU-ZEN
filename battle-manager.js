@@ -22,11 +22,29 @@ class BattleManager {
 
   // Crée un nouveau salon
   async createRoom(playerName, difficulty) {
-    if (!this.db)
+    const monitor = window.firebaseMonitor;
+    
+    // Check Firebase availability
+    if (!this.db) {
+      const errorMsg = "Service multijoueur indisponible";
+      if (monitor) monitor.showDisconnected(errorMsg);
       return {
         success: false,
-        error: "Service multijoueur indisponible (Firebase non chargé)",
+        error: errorMsg + ". Vérifiez votre connexion internet.",
       };
+    }
+
+    // Check connection status
+    if (monitor && !monitor.isConnected()) {
+      return {
+        success: false,
+        error: "Pas de connexion au serveur. Vérifiez votre connexion internet.",
+      };
+    }
+
+    // Show loading
+    if (monitor) monitor.showLoading("Création du salon...");
+
     try {
       const roomCode = this.generateRoomCode();
       this.playerName = playerName;
@@ -60,66 +78,130 @@ class BattleManager {
         winner: null,
       };
 
-      // Créer le salon dans Firebase
+      // Créer le salon dans Firebase avec timeout
       const roomRef = this.dbRefs.ref(this.db, `rooms/${roomCode}`);
-      await this.dbRefs.set(roomRef, roomData);
+      
+      await Promise.race([
+        this.dbRefs.set(roomRef, roomData),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout')), 10000)
+        )
+      ]);
 
       this.currentRoom = roomCode;
       this.setupRoomListeners(roomCode);
       this.setupPresence(roomCode, playerName);
 
+      if (monitor) monitor.hideLoading();
       return { success: true, roomCode: roomCode };
     } catch (error) {
       console.error("Error creating room:", error);
+      if (monitor) {
+        monitor.hideLoading();
+        const errorMsg = monitor.getErrorMessage(error);
+        monitor.showDisconnected(errorMsg);
+      }
+      
+      // Retry logic
+      if (error.message === 'Timeout' && monitor && monitor.retryAttempts < monitor.maxRetries) {
+        try {
+          return await monitor.retryConnection(
+            () => this.createRoom(playerName, difficulty),
+            'Création du salon'
+          );
+        } catch (retryError) {
+          return {
+            success: false,
+            error: monitor.getErrorMessage(retryError),
+          };
+        }
+      }
+      
       return { 
         success: false, 
-        error: error.message || "Erreur de connexion Firebase"
+        error: monitor ? monitor.getErrorMessage(error) : (error.message || "Erreur de connexion")
       };
     }
   }
 
   // Rejoint un salon existant
   async joinRoom(roomCode, playerName) {
-    if (!this.db)
+    const monitor = window.firebaseMonitor;
+    
+    // Check Firebase availability
+    if (!this.db) {
+      const errorMsg = "Service multijoueur indisponible";
+      if (monitor) monitor.showDisconnected(errorMsg);
       return {
         success: false,
-        error: "Service multijoueur indisponible (Firebase non chargé)",
+        error: errorMsg + ". Vérifiez votre connexion internet.",
       };
+    }
+
+    // Check connection status
+    if (monitor && !monitor.isConnected()) {
+      return {
+        success: false,
+        error: "Pas de connexion au serveur. Vérifiez votre connexion internet.",
+      };
+    }
+
+    // Show loading
+    if (monitor) monitor.showLoading("Connexion au salon...");
+
     try {
       this.playerName = playerName;
       this.isHost = false;
 
-      // Vérifier si le salon existe
+      // Vérifier si le salon existe avec timeout
       const roomRef = this.dbRefs.ref(this.db, `rooms/${roomCode}`);
 
-      const snapshot = await this.dbRefs.get(roomRef);
+      const snapshot = await Promise.race([
+        this.dbRefs.get(roomRef),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout')), 10000)
+        )
+      ]);
 
       if (!snapshot.exists()) {
-        return { success: false, error: "Salon introuvable" };
+        if (monitor) monitor.hideLoading();
+        return { success: false, error: "Salon introuvable. Vérifiez le code." };
       }
 
       const roomData = snapshot.val();
 
       if (roomData.guest) {
-        return { success: false, error: "Salon complet" };
+        if (monitor) monitor.hideLoading();
+        return { success: false, error: "Salon complet (2/2 joueurs)." };
       }
 
       if (roomData.status !== "waiting") {
-        return { success: false, error: "Partie déjà commencée" };
+        if (monitor) monitor.hideLoading();
+        return { success: false, error: "La partie a déjà commencé." };
       }
 
-      // Ajouter le joueur au salon
-      await this.dbRefs.update(roomRef, {
-        guest: playerName,
-        status: "starting",
-        [`players/${playerName}`]: {
-          name: playerName,
-          progress: 0,
-          finished: false,
-          finishTime: null,
-          connected: true,
-        },
-      });
+      if (roomData.mode !== "battle") {
+        if (monitor) monitor.hideLoading();
+        return { success: false, error: "Ce salon n'est pas en mode Battle." };
+      }
+
+      // Ajouter le joueur au salon avec timeout
+      await Promise.race([
+        this.dbRefs.update(roomRef, {
+          guest: playerName,
+          status: "starting",
+          [`players/${playerName}`]: {
+            name: playerName,
+            progress: 0,
+            finished: false,
+            finishTime: null,
+            connected: true,
+          },
+        }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout')), 10000)
+        )
+      ]);
 
       this.currentRoom = roomCode;
       this.setupRoomListeners(roomCode);
@@ -131,12 +213,34 @@ class BattleManager {
       this.game.solution = roomData.solution;
       this.game.board = [...roomData.board];
 
+      if (monitor) monitor.hideLoading();
       return { success: true, roomCode: roomCode };
     } catch (error) {
       console.error("[BattleManager] Error joining room:", error);
+      if (monitor) {
+        monitor.hideLoading();
+        const errorMsg = monitor.getErrorMessage(error);
+        monitor.showDisconnected(errorMsg);
+      }
+      
+      // Retry logic
+      if (error.message === 'Timeout' && monitor && monitor.retryAttempts < monitor.maxRetries) {
+        try {
+          return await monitor.retryConnection(
+            () => this.joinRoom(roomCode, playerName),
+            'Connexion au salon'
+          );
+        } catch (retryError) {
+          return {
+            success: false,
+            error: monitor.getErrorMessage(retryError),
+          };
+        }
+      }
+      
       return { 
         success: false, 
-        error: error.message || "Erreur de connexion Firebase"
+        error: monitor ? monitor.getErrorMessage(error) : (error.message || "Erreur de connexion")
       };
     }
   }
@@ -144,6 +248,7 @@ class BattleManager {
   // Configure les listeners pour les changements du salon
   setupRoomListeners(roomCode) {
     const roomRef = this.dbRefs.ref(this.db, `rooms/${roomCode}`);
+    const monitor = window.firebaseMonitor;
 
     const unsubscribe = this.dbRefs.onValue(roomRef, (snapshot) => {
       if (!snapshot.exists()) {
@@ -155,9 +260,15 @@ class BattleManager {
       this.handleRoomUpdate(roomData);
     }, (error) => {
       console.error("Firebase listener error:", error);
+      const errorMsg = monitor ? monitor.getErrorMessage(error) : "Connexion au serveur perdue";
+      
+      if (monitor) {
+        monitor.showDisconnected(errorMsg);
+      }
+      
       this.game.showModal(
         "Erreur de connexion",
-        "Connexion au serveur perdue. Veuillez réessayer."
+        errorMsg + ". La partie a été interrompue."
       );
       this.cleanup();
     });
@@ -367,7 +478,10 @@ class BattleManager {
   // Gère la fermeture du salon
   handleRoomClosed() {
     this.cleanup();
-    this.game.showModal("Salon fermé", "Le salon a été fermé.");
+    this.game.showModal(
+      "Salon fermé", 
+      "Le salon a été fermé par l'hôte ou en raison d'une déconnexion."
+    );
   }
 
   // Configure la présence (détection de déconnexion)

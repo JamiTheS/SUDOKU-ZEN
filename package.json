@@ -4,7 +4,7 @@
   "main": "battle-manager.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "mkdir -p www && cp index.html style.css battle-styles.css script.js battle-manager.js coop-manager.js icon.png www/"
+    "build": "mkdir -p www && cp index.html style.css battle-styles.css script.js battle-manager.js coop-manager.js firebase-monitor.js icon.png www/"
 
   },
   "repository": {
