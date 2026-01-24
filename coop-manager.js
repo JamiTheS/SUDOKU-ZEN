@@ -12,7 +12,8 @@ class CoopManager {
     this.mistakes = 0;
     this.maxMistakes = 3;
     this.gameStarted = false;
-    this.cellOwners = {};
+    this.cellOwners = {}; // Local cache of cell owners
+    this.pendingMoves = new Set(); // Track pending moves to prevent conflicts
   }
 
   cleanup() {
@@ -20,6 +21,9 @@ class CoopManager {
     this.roomListeners = [];
     this.currentRoom = null;
     this.isHost = false;
+    this.gameStarted = false;
+    this.cellOwners = {};
+    this.pendingMoves.clear();
     this.game.coopMode = false;
     if (this.game.dom.board) {
       this.game.dom.board.classList.remove("coop-mode");
@@ -79,6 +83,7 @@ class CoopManager {
       await this.dbRefs.set(roomRef, roomData);
 
       this.currentRoom = roomCode;
+      this.cellOwners = {}; // Initialize local cache
       this.setupRoomListeners(roomCode);
       this.setupPresence(roomCode, "p1");
 
@@ -128,6 +133,7 @@ class CoopManager {
       this.game.initialBoard = roomData.board;
       this.game.solution = roomData.solution;
       this.game.board = [...roomData.currentBoard];
+      this.cellOwners = { ...(roomData.cellOwners || {}) }; // Initialize local cache
       this.game.renderBoard();
 
       this.setupRoomListeners(roomCode);
@@ -162,22 +168,27 @@ class CoopManager {
       this.startGame(data);
     }
 
-    // Sync Board
+    // Sync Board and Cell Owners
     if (data.currentBoard) {
-      // Only update cells that changed to avoid overwriting local optimistic updates too aggressively
-      // But for simplicity in V1, we sync full board.
-      // To prevent cursor jump or input conflict, we could check diffs.
-      this.game.board = data.currentBoard;
+      // Update board only for cells not in pending state
+      for (let i = 0; i < 81; i++) {
+        if (!this.pendingMoves.has(i)) {
+          this.game.board[i] = data.currentBoard[i];
+        }
+      }
+
+      // Update cellOwners cache
+      this.cellOwners = { ...(data.cellOwners || {}) };
 
       // Update UI with owners
-      this.updateBoardUI(data.currentBoard, data.cellOwners);
+      this.updateBoardUI(this.game.board, this.cellOwners);
     }
 
     // Sync Mistakes (Lives)
     if (data.mistakes !== undefined) {
       this.mistakes = data.mistakes;
       this.updateLivesUI();
-      if (this.mistakes >= this.maxMistakes) {
+      if (this.livesEnabled && this.mistakes >= this.maxMistakes) {
         this.handleGameOver();
       }
     }
@@ -229,6 +240,7 @@ class CoopManager {
     this.game.board = [...roomData.currentBoard];
     this.game.initialBoard = roomData.board;
     this.game.solution = roomData.solution;
+    this.cellOwners = { ...(roomData.cellOwners || {}) }; // Initialize local cache
     this.game.notes = new Array(81).fill(null).map(() => new Set());
     this.game.renderBoard();
     this.game.isPlaying = true;
@@ -262,24 +274,40 @@ class CoopManager {
     const cells = this.game.dom.board.children;
     for (let i = 0; i < 81; i++) {
       const cell = cells[i];
+      if (!cell) continue;
+
       const val = board[i];
       const owner = cellOwners ? cellOwners[i] : null;
+      const isFixed = this.game.initialBoard[i] !== 0;
 
-      // Update content if changed
-      // Note: We need to be careful not to break existing render logic
-      // We'll assume game.renderCell handles basic rendering, we just add classes
-
-      if (cell.textContent != val && val !== 0) {
-        cell.textContent = val;
-        cell.classList.remove("notes-grid"); // Clear notes if number placed
-      } else if (val === 0 && !cell.querySelector(".notes-grid")) {
-        cell.textContent = "";
+      // Update content if changed (skip if it's a pending move)
+      if (!this.pendingMoves.has(i)) {
+        // Handle empty cells
+        if (val === 0 || val === null) {
+          if (!cell.querySelector(".notes-grid")) {
+            cell.textContent = "";
+          }
+        } else {
+          // Handle filled cells
+          if (cell.textContent != val) {
+            cell.textContent = val;
+            // Clear notes if number placed
+            const notesGrid = cell.querySelector(".notes-grid");
+            if (notesGrid) {
+              notesGrid.remove();
+            }
+          }
+        }
       }
 
-      // Apply Owner Styles
+      // Apply Owner Styles (but not on fixed cells)
       cell.classList.remove("cell-p1", "cell-p2");
-      if (owner === "p1") cell.classList.add("cell-p1");
-      if (owner === "p2") cell.classList.add("cell-p2");
+      if (!isFixed && owner === "p1") {
+        cell.classList.add("cell-p1");
+      }
+      if (!isFixed && owner === "p2") {
+        cell.classList.add("cell-p2");
+      }
     }
   }
 
@@ -307,63 +335,125 @@ class CoopManager {
   }
 
   async makeMove(index, value) {
-    if (!this.currentRoom) return;
+    if (!this.currentRoom) return false;
+    
+    // Don't allow moves on fixed cells
+    if (this.game.initialBoard[index] !== 0) return false;
 
     const playerKey = this.isHost ? "p1" : "p2";
     const roomRef = this.dbRefs.ref(this.db, `rooms/${this.currentRoom}`);
 
-    // In Lives mode: Check correctness and decrement lives on mistakes
-    // In Timer mode: Allow any number (like real Sudoku)
-    if (
-      this.livesEnabled &&
-      value !== 0 &&
-      value !== this.game.solution[index]
-    ) {
-      // Mistake in Lives mode!
-      await this.dbRefs.update(roomRef, {
-        mistakes: this.mistakes + 1,
+    // Mark this cell as pending to prevent conflicts
+    this.pendingMoves.add(index);
+
+    try {
+      // In Lives mode: Check correctness and decrement lives on mistakes
+      // In Timer mode: Allow any number (like real Sudoku)
+      if (
+        this.livesEnabled &&
+        value !== 0 &&
+        value !== this.game.solution[index]
+      ) {
+        // Mistake in Lives mode!
+        this.showErrorFeedback(index);
+        await this.dbRefs.update(roomRef, {
+          mistakes: this.mistakes + 1,
+        });
+        this.pendingMoves.delete(index);
+        return false;
+      }
+
+      // Optimistically update local state
+      this.game.board[index] = value;
+      if (value !== 0) {
+        this.cellOwners[index] = playerKey;
+      } else {
+        delete this.cellOwners[index];
+      }
+
+      // Update local UI immediately for responsiveness
+      this.game.renderCell(index);
+
+      // Build updates object for Firebase
+      const updates = {};
+      updates[`currentBoard/${index}`] = value;
+      if (value !== 0) {
+        updates[`cellOwners/${index}`] = playerKey;
+      } else {
+        // Erase
+        updates[`cellOwners/${index}`] = null;
+      }
+
+      // Send to Firebase
+      await this.dbRefs.update(roomRef, updates);
+
+      // Clear pending state
+      this.pendingMoves.delete(index);
+
+      // Check Win Condition after successful move
+      if (value !== 0) {
+        await this.checkWinCondition();
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error making move:", error);
+      // Revert optimistic update on error
+      this.pendingMoves.delete(index);
+      // Fetch current state from Firebase to resync
+      const snapshot = await new Promise((resolve) => {
+        this.dbRefs.onValue(roomRef, (snap) => resolve(snap), {
+          onlyOnce: true,
+        });
       });
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        this.game.board = [...data.currentBoard];
+        this.cellOwners = { ...(data.cellOwners || {}) };
+        this.updateBoardUI(this.game.board, this.cellOwners);
+      }
       return false;
     }
-
-    // Valid move (or Timer mode - accept any number)
-    const updates = {};
-    updates[`currentBoard/${index}`] = value;
-    if (value !== 0) {
-      updates[`cellOwners/${index}`] = playerKey;
-    } else {
-      // Erase
-      updates[`cellOwners/${index}`] = null;
-    }
-
-    await this.dbRefs.update(roomRef, updates);
-
-    // Check Win Condition
-    // We need to check if board is full and correct
-    // Since we validate on move, full board = win
-    // But we need to check if ALL cells are filled
-    // We can do a quick check locally
-    const isFull = this.game.board.every((cell) => cell !== 0); // currentBoard is updated optimistically or via listener
-    // Actually, better to check in listener or separate check, but for now:
-    if (value !== 0) {
-      // Fetch latest board to be sure? Or rely on local
-      // Let's assume local is up to date enough for this check
-      // Or just check if 81 cells filled
-    }
-
-    // If full, update status to won
-    // We'll do this in a separate check or after update
-    return true;
   }
 
-  checkWinCondition(board) {
-    if (board.every((cell) => cell !== 0)) {
-      this.dbRefs.update(
-        this.dbRefs.ref(this.db, `rooms/${this.currentRoom}`),
-        {
-          status: "won",
-        }
+  async checkWinCondition() {
+    if (!this.currentRoom) return;
+
+    // Check if board is completely filled
+    const isFull = this.game.board.every((cell) => cell !== 0);
+    
+    if (!isFull) return;
+
+    // In Lives mode, if board is full, it's automatically correct (mistakes prevent incorrect fills)
+    // In Timer mode, check if solution matches
+    let isCorrect = true;
+    if (!this.livesEnabled) {
+      isCorrect = this.game.board.every(
+        (cell, i) => cell === this.game.solution[i]
       );
+    }
+
+    if (isCorrect) {
+      // Update room status to won (only once, use transaction or check)
+      const roomRef = this.dbRefs.ref(this.db, `rooms/${this.currentRoom}`);
+      
+      // Fetch current status first to avoid race condition
+      const snapshot = await new Promise((resolve) => {
+        this.dbRefs.onValue(roomRef, (snap) => resolve(snap), {
+          onlyOnce: true,
+        });
+      });
+      
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        // Only update if not already won
+        if (data.status !== "won") {
+          await this.dbRefs.update(roomRef, {
+            status: "won",
+            endTime: Date.now(),
+          });
+        }
+      }
     }
   }
 
@@ -376,9 +466,10 @@ class CoopManager {
     // Flash the cell red temporarily
     const cell = this.game.dom.board.children[index];
     if (cell) {
+      const originalBg = cell.style.background;
       cell.style.background = "rgba(255, 0, 85, 0.5)";
       setTimeout(() => {
-        cell.style.background = "";
+        cell.style.background = originalBg;
       }, 500);
     }
   }
@@ -390,11 +481,6 @@ class CoopManager {
     );
     this.dbRefs.onDisconnect(conRef).set(false);
     this.dbRefs.set(conRef, true);
-  }
-
-  cleanup() {
-    this.roomListeners.forEach((u) => u());
-    this.roomListeners = [];
   }
 }
 
