@@ -88,18 +88,7 @@ class BattleManager {
       // Vérifier si le salon existe
       const roomRef = this.dbRefs.ref(this.db, `rooms/${roomCode}`);
 
-      const snapshot = await new Promise((resolve, reject) => {
-        this.dbRefs.onValue(
-          roomRef,
-          (snap) => {
-            resolve(snap);
-          },
-          { onlyOnce: true },
-          (error) => {
-            reject(error);
-          }
-        );
-      });
+      const snapshot = await this.dbRefs.get(roomRef);
 
       if (!snapshot.exists()) {
         return { success: false, error: "Salon introuvable" };
@@ -306,15 +295,7 @@ class BattleManager {
     });
 
     // Vérifier si c'est le premier à terminer
-    const snapshot = await new Promise((resolve) => {
-      this.dbRefs.onValue(
-        roomRef,
-        (snap) => {
-          resolve(snap);
-        },
-        { onlyOnce: true }
-      );
-    });
+    const snapshot = await this.dbRefs.get(roomRef);
 
     const roomData = snapshot.val();
 
@@ -359,7 +340,11 @@ class BattleManager {
     );
     const presenceRef = this.dbRefs.onDisconnect(playerRef);
 
-    presenceRef.update({
+    presenceRef.set({
+      name: playerName,
+      progress: 0,
+      finished: false,
+      finishTime: null,
       connected: false,
     });
   }
